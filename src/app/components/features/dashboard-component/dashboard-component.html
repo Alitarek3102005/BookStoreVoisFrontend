@@ -1,0 +1,250 @@
+<div class="admin-page">
+  <div class="page-container">
+    
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Admin <span class="gradient-text">Dashboard</span></h1>
+        <p class="page-subtitle">System overview and administrative controls.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-glow action-btn" (click)="openAddBookModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add New Book
+        </button>
+      </div>
+    </header>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="admin-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+      <button class="glass-btn" [class.active-tab]="activeTab === 'overview'" (click)="setTab('overview')">Overview</button>
+      <button class="glass-btn" [class.active-tab]="activeTab === 'books'" (click)="setTab('books')">Manage Books</button>
+      <button class="glass-btn" [class.active-tab]="activeTab === 'users'" (click)="setTab('users')">Manage Users</button>
+      <button class="glass-btn" [class.active-tab]="activeTab === 'orders'" (click)="setTab('orders')">Manage Orders</button>
+      <button class="glass-btn" [class.active-tab]="activeTab === 'categories'" (click)="setTab('categories')">Manage Categories</button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading admin data...</p>
+    </div>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div class="dashboard-content" *ngIf="!isLoading && activeTab === 'overview'">
+      <div class="stats-grid">
+        <div class="stat-card glass-panel" *ngFor="let stat of stats">
+          <div class="stat-header">
+            <h3 class="stat-title">{{ stat.title }}</h3>
+          </div>
+          <div class="stat-value">{{ stat.value }}</div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel-section glass-panel">
+          <div class="panel-header">
+            <h2>Recent Orders</h2>
+            <button class="text-btn" (click)="setTab('orders')">View All</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer ID</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let order of recentOrders">
+                  <td class="highlight">{{ order.orderId }}</td>
+                  <td>{{ order.userId }}</td>
+                  <td class="text-muted">{{ order.orderDate | date:'shortDate' }}</td>
+                  <td class="highlight">${{ order.totalAmount | number:'1.2-2' }}</td>
+                  <td><span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MANAGE BOOKS -->
+    <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'books'">
+      <div class="panel-header">
+        <h2>Book Catalog Management</h2>
+        <button class="btn-glow" (click)="openAddBookModal()">+ Add Book</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Price</th>
+            <th>Stock Qty</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let book of allBooks">
+            <td class="highlight">{{ book.title }}</td>
+            <td>{{ book.author }}</td>
+            <td>${{ book.price | number:'1.2-2' }}</td>
+            <td>{{ book.quantity }}</td>
+            <td>
+              <button class="action-link" style="color: #ff4d4d; background:none; border:none; cursor:pointer;" (click)="deleteBook(book.bookId)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 3: MANAGE USERS -->
+    <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'users'">
+      <div class="panel-header">
+        <h2>Registered Users</h2>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of allUsers">
+            <td class="highlight">{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <select (change)="updateUserRole(user.userId, $any($event.target).value)" class="glass-select" style="background: rgba(255,255,255,0.1); color:white; border:none; padding: 4px 8px; border-radius:4px;">
+                <option value="CUSTOMER" [selected]="user.role === 'CUSTOMER'">CUSTOMER</option>
+                <option value="ADMIN" [selected]="user.role === 'ADMIN'">ADMIN</option>
+              </select>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="user.enabled ? 'badge-success' : 'badge-danger'">
+                {{ user.enabled ? 'Active' : 'Disabled' }}
+              </span>
+            </td>
+            <td>
+              <button 
+                class="action-link" 
+                [style.color]="user.enabled ? '#ff4d4d' : '#4cd137'" 
+                style="background:none; border:none; cursor:pointer;" 
+                (click)="toggleUserStatus(user.userId, user.enabled)">
+                {{ user.enabled ? 'Disable' : 'Activate' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 4: MANAGE ORDERS -->
+    <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'orders'">
+      <div class="panel-header">
+        <h2>All System Orders</h2>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Update Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of allOrders">
+            <td class="highlight">{{ order.orderId }}</td>
+            <td>{{ order.orderDate | date:'mediumDate' }}</td>
+            <td>${{ order.totalAmount | number:'1.2-2' }}</td>
+            <td><span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></td>
+            <td>
+              <select (change)="updateOrderStatus(order.orderId, $any($event.target).value)" class="glass-select" style="background: rgba(255,255,255,0.1); color:white; border:none; padding: 4px 8px; border-radius:4px;">
+                <option value="PENDING" [selected]="order.status === 'PENDING'">PENDING</option>
+                <option value="SHIPPED" [selected]="order.status === 'SHIPPED'">SHIPPED</option>
+                <option value="COMPLETED" [selected]="order.status === 'COMPLETED'">COMPLETED</option>
+                <option value="CANCELED" [selected]="order.status === 'CANCELED'">CANCELED</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 5: MANAGE CATEGORIES -->
+    <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'categories'">
+      <div class="panel-header">
+        <h2>Category Management</h2>
+        <button class="btn-glow" (click)="openAddCategoryModal()">+ Add Category</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cat of allCategories">
+            <td class="highlight">{{ cat.name }}</td>
+            <td>{{ cat.description }}</td>
+            <td>
+              <button class="action-link" style="color: #ff4d4d; background:none; border:none; cursor:pointer;" (click)="deleteCategory(cat.categoryId)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD BOOK MODAL -->
+<div class="modal-backdrop" *ngIf="showAddBookModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000;">
+  <div class="glass-panel modal-content" style="background:#1a1a1a; padding: 30px; border-radius: 12px; width: 450px;">
+    <h2>Add New Book</h2>
+    <form (ngSubmit)="submitNewBook()" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+      <input type="text" [(ngModel)]="newBook.title" name="title" placeholder="Book Title" required style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      <input type="text" [(ngModel)]="newBook.author" name="author" placeholder="Author Name" required style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      <input type="number" [(ngModel)]="newBook.price" name="price" placeholder="Price ($)" step="0.01" required style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      <input type="number" [(ngModel)]="newBook.quantity" name="quantity" placeholder="Stock Quantity" required style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      <input type="text" [(ngModel)]="newBook.imgURL" name="imgURL" placeholder="Image URL (Short Link)" style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      
+      <select [(ngModel)]="newBook.categoryId" name="categoryId" required style="padding: 10px; background:#222; border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+        <option value="" disabled>Select Category</option>
+        <option *ngFor="let cat of categories" [value]="cat.categoryId">{{ cat.name }}</option>
+      </select>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" (click)="closeAddBookModal()" style="padding: 8px 16px; background:transparent; border:none; color:#aaa; cursor:pointer;">Cancel</button>
+        <button type="submit" class="btn-glow" style="padding: 8px 16px;">Save Book</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+<div class="modal-backdrop" *ngIf="showAddCategoryModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000;">
+  <div class="glass-panel modal-content" style="background:#1a1a1a; padding: 30px; border-radius: 12px; width: 450px;">
+    <h2>Add New Category</h2>
+    <form (ngSubmit)="submitNewCategory()" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+      <input type="text" [(ngModel)]="newCategory.name" name="categoryName" placeholder="Category Name" required style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      <input type="text" [(ngModel)]="newCategory.description" name="categoryDescription" placeholder="Description" style="padding: 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:6px;">
+      
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" (click)="closeAddCategoryModal()" style="padding: 8px 16px; background:transparent; border:none; color:#aaa; cursor:pointer;">Cancel</button>
+        <button type="submit" class="btn-glow" style="padding: 8px 16px;">Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>

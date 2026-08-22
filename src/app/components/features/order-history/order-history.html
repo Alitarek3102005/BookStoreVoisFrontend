@@ -1,0 +1,103 @@
+<div class="orders-page">
+  <div class="page-container">
+    <header class="page-header">
+      <h1 class="page-title">Order <span class="gradient-text">History</span></h1>
+      <p class="page-subtitle">Track your shipments and view past purchases.</p>
+    </header>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading your orders...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state glass-panel" *ngIf="!isLoading && orders.length === 0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+      <h2>No orders yet</h2>
+      <p>Looks like you haven't made any purchases.</p>
+      <button class="btn-glow" routerLink="/catalog">Browse Catalog</button>
+    </div>
+
+    <!-- Orders List -->
+    <div class="orders-list" *ngIf="!isLoading && orders.length > 0">
+      
+      <div class="order-card glass-panel" *ngFor="let order of orders" [class.expanded]="order.isExpanded">
+        
+        <!-- Order Header / Summary (Clickable) -->
+        <div class="order-summary" (click)="toggleOrderDetails(order)">
+          
+          <div class="summary-group">
+            <span class="group-label">Order ID</span>
+            <span class="group-value highlight">{{ order.orderId }}</span>
+          </div>
+
+          <div class="summary-group">
+            <span class="group-label">Date Placed</span>
+            <span class="group-value">{{ (order.orderDate || '') | date:'mediumDate' }}</span>
+          </div>
+
+          <div class="summary-group">
+            <span class="group-label">Total Amount</span>
+            <span class="group-value highlight">${{ order.totalAmount | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-group status-group">
+            <span class="group-label">Status</span>
+            <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+              {{ order.status || 'PENDING' }}
+            </span>
+          </div>
+
+          <div class="expand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="order-details-wrapper" [style.maxHeight]="order.isExpanded ? '1200px' : '0px'">
+          <div class="order-details">
+            <h3 class="details-title">Order Items</h3>
+            
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Book ID</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-right">Unit Price</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of order.items">
+                  <td class="item-name">Book #{{ item.bookId }}</td>
+                  <td class="text-center">{{ item.quantity }}</td>
+                  <td class="text-right">${{ (item.unitPrice || 0) | number:'1.2-2' }}</td>
+                  <td class="text-right item-total">${{ (item.quantity * (item.unitPrice || 0)) | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="order-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+              <button class="action-link">Download Invoice</button>
+
+              <button 
+                *ngIf="order.status === 'PENDING'" 
+                class="btn-glow" 
+                (click)="simulatePayment(order.orderId)" 
+                [disabled]="processingOrderId === order.orderId"
+                style="padding: 10px 20px; font-size: 0.9rem;">
+                <span *ngIf="processingOrderId !== order.orderId">Complete Payment</span>
+                <span *ngIf="processingOrderId === order.orderId">Processing Secure Payment...</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,109 @@
+<div class="details-page" *ngIf="!isLoading && book">
+  
+  <!-- Ambient background glow based on the book cover -->
+  <div class="ambient-bg" [style.backgroundImage]="'url(' + book.imgURL + ')'"></div>
+  
+  <div class="details-container">
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb">
+      <button class="back-btn" (click)="goBack()">← Back to Catalog</button>
+      <span class="divider">/</span>
+      <a routerLink="/catalog">Books</a>
+      <span class="divider">/</span>
+      <span class="current">{{ book.title }}</span>
+    </nav>
+
+    <!-- Main Hero Section -->
+    <div class="main-content-grid">
+      
+      <!-- Left Column: 3D Showcase -->
+      <div class="showcase-col">
+        <div class="book-stage-large">
+          <div class="book-3d-large">
+            <img [src]="book.imgURL" [alt]="book.title">
+            <div class="book-spine"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Details & Purchasing -->
+      <div class="purchase-col glass-panel">
+        <div class="badge-row">
+          <span class="status-badge" *ngIf="book.quantity < 5">LOW STOCK</span>
+          <span class="stock-status" [class.out]="book.quantity === 0">
+            {{ book.quantity > 0 ? '✓ In Stock (' + book.quantity + ' available)' : '✗ Out of Stock' }}
+          </span>
+        </div>
+
+        <h1 class="book-title">{{ book.title }}</h1>
+        <p class="book-author">By <span class="author-name">{{ book.author }}</span></p>
+        
+        <div class="rating-row">
+          <span class="stars">★★★★★</span>
+          <span class="rating-score">4.8</span>
+        </div>
+
+        <p class="short-desc">{{ book.description }}</p>
+
+        <!-- Checkout Actions -->
+        <div class="action-section">
+          <div class="price-display">
+            ${{ totalPrice }}
+          </div>
+          
+          <div class="cart-controls">
+            <div class="quantity-selector">
+              <button (click)="decrementQuantity()" [disabled]="quantityToCart <= 1">-</button>
+              <input type="number" readonly [value]="quantityToCart">
+              <button (click)="incrementQuantity()" [disabled]="quantityToCart >= book.quantity">+</button>
+            </div>
+            
+            <button class="add-to-cart-btn btn-glow" (click)="addToCart()" [disabled]="book.quantity === 0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+              Add to Cart
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Extended Info Tabs -->
+    <div class="extended-info glass-panel">
+      <div class="tabs-header">
+        <button [class.active]="activeTab === 'description'" (click)="activeTab = 'description'">Overview</button>
+        <button [class.active]="activeTab === 'contents'" (click)="activeTab = 'contents'">Table of Contents</button>
+        <button [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">Reviews</button>
+      </div>
+      
+      <div class="tab-content">
+        <div *ngIf="activeTab === 'description'" class="overview-tab">
+          <h3>About this book</h3>
+          <p>{{ book.description }}</p>
+        </div>
+        
+        <div *ngIf="activeTab === 'contents'" class="contents-tab">
+          <ul class="toc-list">
+            <li><strong>Category:</strong> {{ categoryName }}</li>
+          </ul>
+        </div>
+        
+        <div *ngIf="activeTab === 'reviews'" class="reviews-tab">
+          <div class="mock-review">
+            <div class="review-header">
+              <strong>Software Engineer</strong> <span class="stars">★★★★★</span>
+            </div>
+            <p>"An absolute must-read resource."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-screen" *ngIf="isLoading">
+  <div class="spinner"></div>
+</div>

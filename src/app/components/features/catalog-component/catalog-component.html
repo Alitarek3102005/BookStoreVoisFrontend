@@ -1,0 +1,192 @@
+<div class="catalog-page">
+  <header class="catalog-header">
+    <h1 class="page-title">The <span class="gradient-text">Library</span></h1>
+    <p class="page-subtitle">
+      Browse our complete collection of engineering resources.
+    </p>
+  </header>
+
+  <div class="catalog-layout">
+    <!-- Sidebar -->
+    <aside class="catalog-sidebar glass-panel">
+      <div class="filter-group">
+        <h3>Search</h3>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Title or Author..."
+          [(ngModel)]="searchQuery"
+          (input)="onFilterChange()"
+        />
+      </div>
+      <div class="filter-group">
+        <h3>Categories</h3>
+        <ul class="category-list">
+          <li
+            *ngFor="let cat of categories"
+            [class.active]="selectedCategory === cat.name"
+            (click)="selectedCategory = cat.name; onFilterChange()"
+          >
+            <span class="cat-name">{{ cat.name }}</span>
+          </li>
+        </ul>
+      </div>
+      <div class="filter-group">
+        <h3>Max Price: ${{ maxPrice }}</h3>
+        <input
+          type="range"
+          class="price-slider"
+          min="0"
+          max="150"
+          step="5"
+          [(ngModel)]="maxPrice"
+          (change)="onFilterChange()"
+        />
+      </div>
+      <div class="filter-group toggle-group">
+        <label class="toggle-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="inStockOnly"
+            (change)="onFilterChange()"
+          />
+          <span class="custom-checkbox"></span> In Stock Only
+        </label>
+      </div>
+    </aside>
+
+    <main class="catalog-content">
+      <!-- Advanced Top Bar with View Toggles -->
+      <div class="content-top-bar glass-panel">
+        <span class="results-count"
+          >Showing {{ filteredBooks.length }} results (Total:
+          {{ totalElements }})</span
+        >
+
+        <div class="toolbar-actions">
+          <div class="view-toggles">
+            <button
+              [class.active]="viewMode === 'grid'"
+              (click)="viewMode = 'grid'"
+              title="Grid View"
+            >
+              ⊞
+            </button>
+            <button
+              [class.active]="viewMode === 'list'"
+              (click)="viewMode = 'list'"
+              title="List View"
+            >
+              ☰
+            </button>
+          </div>
+          <div class="sort-dropdown">
+            <select [(ngModel)]="sortBy" (change)="onFilterChange()">
+              <option value="recommended">Recommended</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SKELETON LOADERS -->
+      <div class="book-container" [ngClass]="viewMode" *ngIf="isLoading">
+        <div class="skeleton-card glass-panel" *ngFor="let s of skeletonArray">
+          <div class="skeleton-img pulse"></div>
+          <div
+            class="skeleton-text pulse"
+            style="width: 80%; margin-top: 20px"
+          ></div>
+          <div class="skeleton-text pulse" style="width: 50%"></div>
+          <div class="skeleton-btn pulse"></div>
+        </div>
+      </div>
+
+      <!-- ACTUAL CONTENT -->
+      <div class="book-container" [ngClass]="viewMode" *ngIf="!isLoading">
+        <div class="premium-book-card" *ngFor="let book of filteredBooks">
+          <div class="book-stage" (click)="openQuickView(book)">
+            <div class="book-3d">
+              <img [src]="book.imgURL" [alt]="book.title" />
+            </div>
+            <div class="quick-view-hint">Quick View</div>
+          </div>
+
+          <div class="book-details glass-panel">
+            <div class="badge-row">
+              <span class="status-badge" *ngIf="book.quantity < 5"
+                >LOW STOCK</span
+              >
+              <span class="rating">★ 4.8</span>
+            </div>
+            <h3>{{ book.title }}</h3>
+            <p class="author">By {{ book.author }}</p>
+            <span class="cat-tag" *ngIf="viewMode === 'list'">{{
+              getCategoryName(book.categoryId)
+            }}</span>
+            <p class="list-desc" *ngIf="viewMode === 'list'">
+              {{ book.description }}
+            </p>
+
+            <div class="action-row">
+              <div class="price">${{ book.price }}</div>
+
+              <div class="button-group" style="display: flex; gap: 8px">
+                <button
+                  class="cart-btn"
+                  [routerLink]="['/book', getBookId(book)]"
+                  style="background: rgba(255, 255, 255, 0.1); color: white"
+                >
+                  Details
+                </button>
+
+                <button
+                  class="cart-btn"
+                  [disabled]="book.quantity === 0"
+                  (click)="addToCart(book)"
+                >
+                  {{ book.quantity > 0 ? "Add" : "Out" }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGINATION CONTROLS -->
+      <div
+        class="pagination-controls glass-panel"
+        *ngIf="totalPages > 1"
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
+          margin-top: 30px;
+          padding: 15px;
+        "
+      >
+        <button
+          (click)="prevPage()"
+          [disabled]="currentPage === 0"
+          class="cart-btn"
+          style="padding: 8px 16px"
+        >
+          Previous
+        </button>
+        <span style="font-weight: 600"
+          >Page {{ currentPage + 1 }} of {{ totalPages }}</span
+        >
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage >= totalPages - 1"
+          class="cart-btn"
+          style="padding: 8px 16px"
+        >
+          Next
+        </button>
+      </div>
+    </main>
+  </div>
+</div>

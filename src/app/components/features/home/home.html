@@ -1,0 +1,150 @@
+<div class="master-layout">
+
+  <!-- 1. IMMERSIVE HERO WITH VIDEO BACKGROUND -->
+  <section class="hero-module">
+    <!-- Video Background Container -->
+    <div class="video-bg-container">
+      <!-- autoplay, loop, muted, and playsinline are required for modern browsers to auto-play video -->
+      <video #heroVideo autoplay loop muted playsinline class="hero-video">
+        <source src="assets/videos/17489505-hd_1920_1080_50fps.mp4" type="video/mp4">
+      </video>
+      <!-- Gradient overlay to blend the video with the dark theme and keep text readable -->
+      <div class="video-overlay"></div>
+    </div>
+    
+    <div class="hero-content">
+      <div class="pill-badge animate-on-scroll reveal-down">v2.0 Architecture Released</div>
+      <h1 class="hero-title animate-on-scroll reveal-up stagger-1">
+        The Ultimate <br><span class="gradient-text">Engineering Library</span>
+      </h1>
+      <p class="hero-desc animate-on-scroll reveal-up stagger-2">
+        Curated books, interactive WebGL labs, and masterclasses designed for full-stack developers building high-performance systems.
+      </p>
+      <div class="hero-buttons animate-on-scroll reveal-up stagger-3">
+        <button class="btn btn-glow">Browse Catalog</button>
+        <button class="btn btn-outline">Enter Visual Labs</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. STATS BAR -->
+  <section class="stats-module">
+    <div class="stat-item animate-on-scroll reveal-scale" *ngFor="let stat of stats; let i = index" [style.transition-delay]="i * 0.1 + 's'">
+      <span class="stat-val">{{ stat.value }}</span>
+      <span class="stat-label">{{ stat.label }}</span>
+    </div>
+  </section>
+
+  <!-- 3. INTERACTIVE VISUAL LABS -->
+  <section class="section-module labs-module">
+    <div class="section-header animate-on-scroll reveal-up">
+      <h2>Interactive Learning <span class="gradient-text">Labs</span></h2>
+      <p>Master complex algorithms and rendering techniques through interactive browser simulations.</p>
+    </div>
+    
+    <div class="grid-layout two-col">
+      <!-- Staggered Left/Right Slides -->
+      <div class="lab-card animate-on-scroll" 
+           [ngClass]="i % 2 === 0 ? 'reveal-left' : 'reveal-right'" 
+           *ngFor="let lab of labs; let i = index">
+        <img [src]="lab.imgURL" [alt]="lab.title" class="lab-bg">
+        <div class="lab-overlay">
+          <div class="lab-tags">
+            <span class="tag tech">{{ lab.tech }}</span>
+            <span class="tag diff">{{ lab.difficulty }}</span>
+          </div>
+          <div class="lab-text">
+            <h3>{{ lab.title }}</h3>
+            <p>{{ lab.subtitle }}</p>
+          </div>
+          <button class="btn-icon">Launch Lab ➔</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. VIDEO MASTERCLASSES -->
+  <section class="section-module videos-module">
+    <div class="section-header animate-on-scroll reveal-up">
+      <h2>Tech <span class="gradient-text">Masterclasses</span></h2>
+      <p>Deep dives into Spring Security, .NET dependency injection, and modern frontend architecture.</p>
+    </div>
+    
+    <div class="grid-layout">
+      <!-- Scale-up staggered animations -->
+      <div class="video-card glass-panel animate-on-scroll reveal-scale" 
+           *ngFor="let video of videos; let i = index" 
+           [style.transition-delay]="i * 0.15 + 's'">
+        <div class="thumbnail">
+          <img [src]="video.imgURL" alt="Thumbnail">
+          <div class="play-btn">▶</div>
+          <span class="duration-badge">{{ video.duration }}</span>
+        </div>
+        <div class="video-info">
+          <span class="category-tag">{{ video.tag }}</span>
+          <h3>{{ video.title }}</h3>
+          <p>{{ video.subtitle }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. THE PREMIUM LIBRARY -->
+  <section class="section-module library-module">
+    <div class="section-header animate-on-scroll reveal-up">
+      <h2>The Core <span class="gradient-text">Library</span></h2>
+      <div class="stack-filters">
+        <!-- UPDATED: Now calls filterByStack(stack) -->
+        <button *ngFor="let stack of stacks" class="filter-btn" [class.active]="activeStack === stack" (click)="filterByStack(stack)">
+          {{ stack }}
+        </button>
+      </div>
+    </div>
+
+    <div class="grid-layout three-col">
+      <!-- Floating 3D Cards that fade up on scroll -->
+      <div class="premium-book-card animate-on-scroll reveal-up" 
+           *ngFor="let book of books; let i = index" 
+           [style.transition-delay]="i * 0.1 + 's'">
+        
+        <!-- Continuous floating animation class added here -->
+        <div class="book-stage floating-item" [style.animation-delay]="i * 0.5 + 's'">
+          <div class="book-3d">
+            <img [src]="book.imgURL" [alt]="book.title">
+          </div>
+        </div>
+        
+        <div class="book-details glass-panel">
+          <div class="badge-row">
+            <span class="status-badge" *ngIf="book.badge">{{ book.badge }}</span>
+            <span class="rating">★ {{ book.rating }}</span>
+          </div>
+          <h3>{{ book.title }}</h3>
+          <p class="author">{{ book.author }}</p>
+          <div class="format-toggles">
+            <button *ngFor="let format of book.formats" [class.active]="book.selectedFormat === format.type" (click)="selectFormat(book, format.type, $event)">
+              {{ format.type }}
+            </button>
+          </div>
+          <div class="action-row">
+            <div class="price">${{ (book.formats[0].type === book.selectedFormat ? book.formats[0].price : (book.formats[1]?.price || book.formats[0].price)) }}</div>
+            <button class="cart-btn" [disabled]="book.quantity === 0">{{ book.quantity > 0 ? 'Add to Cart' : 'Out of Stock' }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. FOOTER CTA -->
+  <footer class="footer-cta animate-on-scroll reveal-up">
+    <div class="glass-panel text-center">
+      <h2>Ready to upgrade your stack?</h2>
+      <p>Join thousands of developers mastering modern software engineering.</p>
+      <div class="email-capture">
+        <input type="email" placeholder="Enter your email address...">
+        <button class="btn btn-glow">Subscribe</button>
+      </div>
+    </div>
+  </footer>
+
+</div>

@@ -1,0 +1,103 @@
+<div class="profile-page">
+  <div class="page-container">
+    
+    <header class="page-header">
+      <h1 class="page-title">Account <span class="gradient-text">Settings</span></h1>
+      <p class="page-subtitle">Manage your personal information and security preferences.</p>
+    </header>
+
+    <div class="profile-grid">
+      
+      <aside class="profile-sidebar glass-panel">
+        <div class="user-info-card">
+          <div class="avatar-large" *ngIf="profile.username">{{ profile.username.charAt(0).toUpperCase() }}</div>
+          <h2 class="username">{{ profile.username }}</h2>
+          <span class="role-badge" *ngIf="userRole === 'ADMIN'">{{ userRole }}</span>
+          <span class="role-badge customer" *ngIf="userRole === 'CUSTOMER'">{{ userRole }}</span>
+        </div>
+
+        <nav class="profile-nav">
+          <button [class.active]="activeTab === 'general'" (click)="setTab('general')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            General Profile
+          </button>
+          <button [class.active]="activeTab === 'security'" (click)="setTab('security')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Security
+          </button>
+        </nav>
+      </aside>
+
+      <main class="profile-content glass-panel">
+        
+        <div class="banner error-banner" *ngIf="errorMessage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          {{ errorMessage }}
+        </div>
+        <div class="banner success-banner" *ngIf="successMessage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          {{ successMessage }}
+        </div>
+
+        <div class="tab-pane" *ngIf="activeTab === 'general'">
+          <div class="pane-header">
+            <h3>Personal Information</h3>
+            <p>Update your contact details.</p>
+          </div>
+
+          <form (ngSubmit)="saveProfile()">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" name="username" [(ngModel)]="profile.username" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" name="email" [(ngModel)]="profile.email" required>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-glow" [disabled]="isLoading">
+                <span *ngIf="!isLoading">Save Changes</span>
+                <div class="spinner" *ngIf="isLoading"></div>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane" *ngIf="activeTab === 'security'">
+          <div class="pane-header">
+            <h3>Change Password</h3>
+            <p>Ensure your account is using a long, random password to stay secure.</p>
+          </div>
+
+          <form (ngSubmit)="updatePassword()">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" name="currentPassword" [(ngModel)]="currentPassword" required>
+            </div>
+            
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" name="newPassword" [(ngModel)]="newPassword" required>
+            </div>
+
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" required>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-glow" [disabled]="isLoading">
+                <span *ngIf="!isLoading">Update Password</span>
+                <div class="spinner" *ngIf="isLoading"></div>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+</div>
