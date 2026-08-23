@@ -1,22 +1,35 @@
 <div class="orders-page">
   <div class="page-container">
-    <header class="page-header">
-      <h1 class="page-title">Order <span class="gradient-text">History</span></h1>
-      <p class="page-subtitle">Track your shipments and view past purchases.</p>
+    <header class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+      <div>
+        <h1 class="page-title">Order <span class="gradient-text">History</span></h1>
+        <p class="page-subtitle">Track your shipments and view past purchases.</p>
+      </div>
+
+      <div class="sort-controls" *ngIf="orders.length > 0 || currentPage > 0">
+        <select [(ngModel)]="sortBy" (change)="onSortChange()" class="glass-select" style="padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.2);">
+          <option value="orderDate,desc">Newest First</option>
+          <option value="orderDate,asc">Oldest First</option>
+          <option value="totalAmount,desc">Highest Total</option>
+          <option value="totalAmount,asc">Lowest Total</option>
+        </select>
+      </div>
     </header>
 
-    <!-- Loading State -->
-    <div class="loading-state" *ngIf="isLoading">
-      <div class="spinner"></div>
-      <p>Loading your orders...</p>
+    <div class="loading-state text-center" *ngIf="isLoading" style="padding: 60px 0;">
+      <div class="spinner" style="margin: 0 auto;"></div>
+      <p style="margin-top: 15px; color: #aaa;">Loading your orders...</p>
     </div>
 
-    <!-- Empty State -->
-    <div class="empty-state glass-panel" *ngIf="!isLoading && orders.length === 0">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+    <div class="empty-state glass-panel text-center" *ngIf="!isLoading && orders.length === 0 && currentPage === 0" style="padding: 60px 20px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; opacity: 0.5; margin-bottom: 20px;">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+      </svg>
       <h2>No orders yet</h2>
-      <p>Looks like you haven't made any purchases.</p>
-      <button class="btn-glow" routerLink="/catalog">Browse Catalog</button>
+      <p style="color: #aaa; margin-bottom: 25px;">Looks like you haven't made any purchases.</p>
+      <button class="btn-glow" routerLink="/catalog" style="padding: 12px 24px;">Browse Catalog</button>
     </div>
 
     <!-- Orders List -->
@@ -24,12 +37,11 @@
       
       <div class="order-card glass-panel" *ngFor="let order of orders" [class.expanded]="order.isExpanded">
         
-        <!-- Order Header / Summary (Clickable) -->
-        <div class="order-summary" (click)="toggleOrderDetails(order)">
+        <div class="order-summary" (click)="toggleOrderDetails(order)" style="cursor: pointer;">
           
           <div class="summary-group">
             <span class="group-label">Order ID</span>
-            <span class="group-value highlight">{{ order.orderId }}</span>
+            <span class="group-value highlight" [title]="order.orderId">{{ order.orderId | slice:0:8 }}...</span>
           </div>
 
           <div class="summary-group">
@@ -45,43 +57,42 @@
           <div class="summary-group status-group">
             <span class="group-label">Status</span>
             <span class="status-badge" [ngClass]="getStatusClass(order.status)">
-              {{ order.status || 'PENDING' }}
+              {{ order.status || 'PENDING' | orderStatus }}
             </span>
           </div>
 
-          <div class="expand-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <div class="expand-icon" [style.transform]="order.isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'" style="transition: transform 0.3s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
         </div>
 
-        <!-- Order Items -->
-        <div class="order-details-wrapper" [style.maxHeight]="order.isExpanded ? '1200px' : '0px'">
-          <div class="order-details">
-            <h3 class="details-title">Order Items</h3>
+        <div class="order-details-wrapper" [style.maxHeight]="order.isExpanded ? '2000px' : '0px'" style="overflow: hidden; transition: max-height 0.4s ease-in-out;">
+          <div class="order-details" style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 15px;">
+            <h3 class="details-title" style="margin-bottom: 15px;">Order Items</h3>
             
-            <table class="items-table">
+            <table class="items-table" style="width: 100%; border-collapse: collapse;">
               <thead>
-                <tr>
-                  <th>Book ID</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-right">Unit Price</th>
-                  <th class="text-right">Total</th>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
+                  <th style="padding: 10px;">Item Ref</th>
+                  <th class="text-center" style="padding: 10px; text-align: center;">Qty</th>
+                  <th class="text-right" style="padding: 10px; text-align: right;">Unit Price</th>
+                  <th class="text-right" style="padding: 10px; text-align: right;">Total</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of order.items">
-                  <td class="item-name">Book #{{ item.bookId }}</td>
-                  <td class="text-center">{{ item.quantity }}</td>
-                  <td class="text-right">${{ (item.unitPrice || 0) | number:'1.2-2' }}</td>
-                  <td class="text-right item-total">${{ (item.quantity * (item.unitPrice || 0)) | number:'1.2-2' }}</td>
+                <tr *ngFor="let item of order.items" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td class="item-name" style="padding: 10px;">Book #{{ item.bookId | slice:0:8 }}</td>
+                  <td class="text-center" style="padding: 10px; text-align: center;">{{ item.quantity }}</td>
+                  <td class="text-right" style="padding: 10px; text-align: right;">${{ (item.unitPrice || 0) | number:'1.2-2' }}</td>
+                  <td class="text-right item-total" style="padding: 10px; text-align: right;">${{ (item.quantity * (item.unitPrice || 0)) | number:'1.2-2' }}</td>
                 </tr>
               </tbody>
             </table>
 
-            <div class="order-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-              <button class="action-link">Download Invoice</button>
+            <div class="order-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px;">
+              <button class="action-link" style="background: none; border: none; color: #aaa; cursor: pointer; text-decoration: underline;">Download Invoice</button>
 
               <button 
                 *ngIf="order.status === 'PENDING'" 
@@ -97,7 +108,13 @@
         </div>
 
       </div>
-
     </div>
+
+    <div class="pagination-controls glass-panel" *ngIf="!isLoading && (currentPage > 0 || hasMoreOrders)" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 40px; padding: 15px; border-radius: 12px; width: fit-content; margin-left: auto; margin-right: auto;">
+      <button class="btn btn-outline" (click)="prevPage()" [disabled]="currentPage === 0" style="min-width: 100px;">← Prev</button>
+      <span style="font-weight: bold; color: rgba(255,255,255,0.8);">Page {{ currentPage + 1 }}</span>
+      <button class="btn btn-outline" (click)="nextPage()" [disabled]="!hasMoreOrders" style="min-width: 100px;">Next →</button>
+    </div>
+
   </div>
 </div>

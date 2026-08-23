@@ -1,14 +1,10 @@
 <div class="master-layout">
 
-  <!-- 1. IMMERSIVE HERO WITH VIDEO BACKGROUND -->
   <section class="hero-module">
-    <!-- Video Background Container -->
     <div class="video-bg-container">
-      <!-- autoplay, loop, muted, and playsinline are required for modern browsers to auto-play video -->
       <video #heroVideo autoplay loop muted playsinline class="hero-video">
         <source src="assets/videos/17489505-hd_1920_1080_50fps.mp4" type="video/mp4">
       </video>
-      <!-- Gradient overlay to blend the video with the dark theme and keep text readable -->
       <div class="video-overlay"></div>
     </div>
     
@@ -21,13 +17,12 @@
         Curated books, interactive WebGL labs, and masterclasses designed for full-stack developers building high-performance systems.
       </p>
       <div class="hero-buttons animate-on-scroll reveal-up stagger-3">
-        <button class="btn btn-glow">Browse Catalog</button>
+        <button class="btn btn-glow" routerLink="/catalog">Browse Catalog</button>
         <button class="btn btn-outline">Enter Visual Labs</button>
       </div>
     </div>
   </section>
 
-  <!-- 2. STATS BAR -->
   <section class="stats-module">
     <div class="stat-item animate-on-scroll reveal-scale" *ngFor="let stat of stats; let i = index" [style.transition-delay]="i * 0.1 + 's'">
       <span class="stat-val">{{ stat.value }}</span>
@@ -35,15 +30,13 @@
     </div>
   </section>
 
-  <!-- 3. INTERACTIVE VISUAL LABS -->
-  <section class="section-module labs-module">
+  <section class="section-module labs-module" *ngIf="labs.length > 0">
     <div class="section-header animate-on-scroll reveal-up">
       <h2>Interactive Learning <span class="gradient-text">Labs</span></h2>
       <p>Master complex algorithms and rendering techniques through interactive browser simulations.</p>
     </div>
     
     <div class="grid-layout two-col">
-      <!-- Staggered Left/Right Slides -->
       <div class="lab-card animate-on-scroll" 
            [ngClass]="i % 2 === 0 ? 'reveal-left' : 'reveal-right'" 
            *ngFor="let lab of labs; let i = index">
@@ -63,15 +56,13 @@
     </div>
   </section>
 
-  <!-- 4. VIDEO MASTERCLASSES -->
-  <section class="section-module videos-module">
+  <section class="section-module videos-module" *ngIf="videos.length > 0">
     <div class="section-header animate-on-scroll reveal-up">
       <h2>Tech <span class="gradient-text">Masterclasses</span></h2>
       <p>Deep dives into Spring Security, .NET dependency injection, and modern frontend architecture.</p>
     </div>
     
     <div class="grid-layout">
-      <!-- Scale-up staggered animations -->
       <div class="video-card glass-panel animate-on-scroll reveal-scale" 
            *ngFor="let video of videos; let i = index" 
            [style.transition-delay]="i * 0.15 + 's'">
@@ -89,26 +80,44 @@
     </div>
   </section>
 
-  <!-- 5. THE PREMIUM LIBRARY -->
+  <!-- Books Library Section with Connected Search & Pagination -->
   <section class="section-module library-module">
     <div class="section-header animate-on-scroll reveal-up">
       <h2>The Core <span class="gradient-text">Library</span></h2>
-      <div class="stack-filters">
-        <!-- UPDATED: Now calls filterByStack(stack) -->
-        <button *ngFor="let stack of stacks" class="filter-btn" [class.active]="activeStack === stack" (click)="filterByStack(stack)">
-          {{ stack }}
-        </button>
+      
+      <div class="library-controls" style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 25px;">
+        
+        <!-- Search Input -->
+        <div class="search-wrapper" style="display: flex; gap: 10px; width: 100%; max-width: 500px;">
+          <input type="text" 
+                 placeholder="Search books by title..." 
+                 [(ngModel)]="searchQuery" 
+                 (keyup.enter)="onSearch()"
+                 style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.4); color: white; outline: none; font-size: 1rem;">
+          <button class="btn btn-glow" (click)="onSearch()" style="padding: 10px 24px;">Search</button>
+        </div>
+
+        <!-- Stack / Category Filters -->
+        <div class="stack-filters">
+          <button *ngFor="let stack of stacks" class="filter-btn" [class.active]="activeStack === stack" (click)="filterByStack(stack)">
+            {{ stack }}
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="grid-layout three-col">
-      <!-- Floating 3D Cards that fade up on scroll -->
+    <!-- Loading Spinner -->
+    <div class="loading-state text-center" *ngIf="isLoadingBooks" style="padding: 40px 0;">
+      <div class="spinner" style="margin: 0 auto;"></div>
+    </div>
+
+    <!-- Book Grid -->
+    <div class="grid-layout three-col" *ngIf="!isLoadingBooks && books.length > 0">
       <div class="premium-book-card animate-on-scroll reveal-up" 
            *ngFor="let book of books; let i = index" 
            [style.transition-delay]="i * 0.1 + 's'">
         
-        <!-- Continuous floating animation class added here -->
-        <div class="book-stage floating-item" [style.animation-delay]="i * 0.5 + 's'">
+        <div class="book-stage floating-item" [style.animation-delay]="i * 0.5 + 's'" [routerLink]="['/book', book.id]" style="cursor: pointer;">
           <div class="book-3d">
             <img [src]="book.imgURL" [alt]="book.title">
           </div>
@@ -117,25 +126,42 @@
         <div class="book-details glass-panel">
           <div class="badge-row">
             <span class="status-badge" *ngIf="book.badge">{{ book.badge }}</span>
+            <span class="stock-status" *ngIf="book.quantity === 0" style="color: #ff4d4d; font-size: 0.8rem; font-weight: bold;">OUT OF STOCK</span>
             <span class="rating">★ {{ book.rating }}</span>
           </div>
-          <h3>{{ book.title }}</h3>
+          <h3 [routerLink]="['/book', book.id]" style="cursor: pointer; transition: color 0.3s;" onmouseover="this.style.color='#00e5ff'" onmouseout="this.style.color='white'">{{ book.title }}</h3>
           <p class="author">{{ book.author }}</p>
+          
           <div class="format-toggles">
             <button *ngFor="let format of book.formats" [class.active]="book.selectedFormat === format.type" (click)="selectFormat(book, format.type, $event)">
               {{ format.type }}
             </button>
           </div>
+          
           <div class="action-row">
-            <div class="price">${{ (book.formats[0].type === book.selectedFormat ? book.formats[0].price : (book.formats[1]?.price || book.formats[0].price)) }}</div>
-            <button class="cart-btn" [disabled]="book.quantity === 0">{{ book.quantity > 0 ? 'Add to Cart' : 'Out of Stock' }}</button>
+            <div class="price">${{ (book.formats[0].type === book.selectedFormat ? book.formats[0].price : (book.formats[1]?.price || book.formats[0].price)) | number:'1.2-2' }}</div>
+            <button class="cart-btn btn-glow" [disabled]="book.quantity === 0" (click)="addToCart(book)" style="padding: 8px 16px; border-radius: 6px;">
+              {{ book.quantity > 0 ? '+ Cart' : 'Unavailable' }}
+            </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingBooks && books.length === 0" class="text-center" style="padding: 40px 0; color: #aaa;">
+      <p>No books found matching your search or category.</p>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-controls glass-panel animate-on-scroll reveal-up" *ngIf="!isLoadingBooks && (currentPage > 0 || hasMoreBooks)" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 40px; padding: 15px; border-radius: 12px; width: fit-content; margin-left: auto; margin-right: auto;">
+      <button class="btn btn-outline" (click)="prevPage()" [disabled]="currentPage === 0" style="min-width: 100px;">← Prev</button>
+      <span style="font-weight: bold; color: rgba(255,255,255,0.8);">Page {{ currentPage + 1 }}</span>
+      <button class="btn btn-outline" (click)="nextPage()" [disabled]="!hasMoreBooks" style="min-width: 100px;">Next →</button>
+    </div>
+
   </section>
 
-  <!-- 6. FOOTER CTA -->
   <footer class="footer-cta animate-on-scroll reveal-up">
     <div class="glass-panel text-center">
       <h2>Ready to upgrade your stack?</h2>

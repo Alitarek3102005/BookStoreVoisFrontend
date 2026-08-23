@@ -52,19 +52,15 @@ export class Login {
       next: (res) => {
         this.isLoading = false;
         
-        // 1. Assign tokens to the Keycloak instance
         this.keycloak.authenticated = true;
         this.keycloak.token = res.access_token;
         this.keycloak.refreshToken = res.refresh_token;
         
-        // 2. Parse the token so tokenParsed is populated for the navbar
-        // We decode the JWT payload manually or use Keycloak's internal parser if available
         const tokenParts = res.access_token.split('.');
         if (tokenParts.length === 2 || tokenParts.length === 3) {
           this.keycloak.tokenParsed = JSON.parse(atob(tokenParts[1]));
         }
 
-        // 3. Force trigger Keycloak's auth success event so listeners pick it up
         if (this.keycloak.onAuthSuccess) {
           this.keycloak.onAuthSuccess();
         }

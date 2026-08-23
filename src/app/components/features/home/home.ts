@@ -1,11 +1,13 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import Keycloak from 'keycloak-js';
 import { BookService } from '../../../services/book-service';
 import { CategoryService } from '../../../services/category-service';
+import { CartService } from '../../../services/cart-service';
 import { VideoService } from '../../../services/video-service';
 import { LabService } from '../../../services/lab-service';
-
 
 interface ContentItem { id: string; title: string; subtitle: string; imgURL: string; }
 interface Video extends ContentItem { duration: string; tag: string; }
@@ -19,7 +21,7 @@ interface AdvancedBook extends ContentItem {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
@@ -28,12 +30,14 @@ export class Home implements OnInit, AfterViewInit {
 
   private bookService = inject(BookService);
   private categoryService = inject(CategoryService);
+  private cartService = inject(CartService);
   private videoService = inject(VideoService);
   private labService = inject(LabService);
+  private keycloak = inject(Keycloak);
+  private cdr = inject(ChangeDetectorRef);
 
   private observer!: IntersectionObserver;
 
-  // Stats will now be calculated dynamically from the database
   stats: { label: string; value: string }[] = [];
   
   rawCategories: any[] = [];
@@ -44,11 +48,16 @@ export class Home implements OnInit, AfterViewInit {
   videos: Video[] = [];
   labs: Lab[] = [];
 
+  searchQuery: string = '';
+  currentPage: number = 0;
+  pageSize: number = 6; 
+  hasMoreBooks: boolean = true;
+  isLoadingBooks: boolean = false;
+
   constructor(private el: ElementRef) {}
 
   ngOnInit(): void {
     this.loadCategories();
-    this.loadBooks();
     this.loadVideos();
     this.loadLabs();
   }
@@ -57,51 +66,117 @@ export class Home implements OnInit, AfterViewInit {
     this.categoryService.getAllCategories().subscribe(categories => {
       this.rawCategories = categories;
       this.stacks = ['All', ...categories.map(c => c.name)];
-      this.calculateDynamicStats(); // Update stats when categories load
+      
+      this.loadBooks(true); 
     });
   }
 
-  loadBooks(categoryId?: string): void {
-    this.bookService.getAllBooks({ categoryId }).subscribe(backendBooks => {
-      this.books = backendBooks.map(b => ({
-        id: b.bookId || '',
-        title: b.title,
-        subtitle: b.description || 'Premium Engineering Resource',
-        author: b.author,
-        basePrice: b.price,
-        quantity: b.quantity,
-        rating: 4.8, 
-        imgURL: b.imgURL || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=400',
-        formats: [
-          { type: 'Hardcover', price: b.price }, 
-          { type: 'E-Book', price: Number((b.price * 0.7).toFixed(2)) }
-        ],
-        selectedFormat: 'Hardcover',
-        badge: b.quantity < 5 ? 'LOW STOCK' : undefined
-      }));
+  loadBooks(resetPage: boolean = false): void {
+    if (resetPage) {
+      this.currentPage = 0;
+    }
+    this.isLoadingBooks = true;
 
-      this.calculateDynamicStats(); // Update stats when books load
-      this.triggerAnimations();
+    let catId = undefined;
+    if (this.activeStack !== 'All') {
+      const category = this.rawCategories.find(c => c.name === this.activeStack);
+      catId = category?.id || category?.categoryId;
+    }
+
+    this.bookService.searchBooks(
+      this.searchQuery || undefined, 
+      undefined, 
+      catId, 
+      this.currentPage, 
+      this.pageSize, 
+      'title,ASC'
+    ).subscribe({
+      next: (backendBooks) => {
+        this.books = backendBooks.map(b => ({
+          id: b.bookId || (b as any).id,
+          title: b.title,
+          subtitle: b.description || 'Premium Engineering Resource',
+          author: b.author,
+          basePrice: b.price,
+          quantity: b.quantity,
+          rating: 4.8, 
+          imgURL: b.imgURL || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=400',
+          formats: [
+            { type: 'Hardcover', price: b.price }, 
+            { type: 'E-Book', price: Number((b.price * 0.7).toFixed(2)) }
+          ],
+          selectedFormat: 'Hardcover',
+          badge: b.quantity < 5 && b.quantity > 0 ? 'LOW STOCK' : undefined
+        }));
+
+        this.hasMoreBooks = backendBooks.length === this.pageSize;
+        this.isLoadingBooks = false;
+        
+        this.calculateDynamicStats(); 
+        this.triggerAnimations();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load books:', err);
+        this.isLoadingBooks = false;
+      }
     });
   }
 
-  // Fetch from the backend!
-  loadVideos(): void {
-    this.videoService.getAllVideos().subscribe(backendVideos => {
-      this.videos = backendVideos;
-      this.triggerAnimations();
+  onSearch(): void {
+    this.loadBooks(true);
+  }
+
+  nextPage(): void {
+    if (this.hasMoreBooks) {
+      this.currentPage++;
+      this.loadBooks();
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.loadBooks();
+    }
+  }
+
+  filterByStack(stackName: string): void {
+    this.activeStack = stackName;
+    this.loadBooks(true);
+  }
+
+  // Connects to the real CartService using Keycloak Identity
+  addToCart(book: AdvancedBook): void {
+    if (book.quantity === 0) return;
+
+    const tokenParsed: any = this.keycloak.tokenParsed;
+    const userId = tokenParsed?.sub;
+
+    if (!userId) {
+      alert('Please log in to add items to your cart.');
+      return;
+    }
+
+    this.cartService.addItemToCart(userId, {
+      bookId: book.id,
+      quantity: 1
+    }).subscribe({
+      next: () => {
+        alert(`${book.title} added to your cart successfully!`);
+      },
+      error: (err) => {
+        console.error('Failed to add item to cart', err);
+        alert('Could not add item to cart. Check stock availability.');
+      }
     });
   }
 
-  // Fetch from the backend!
-  loadLabs(): void {
-    this.labService.getAllLabs().subscribe(backendLabs => {
-      this.labs = backendLabs;
-      this.triggerAnimations();
-    });
+  selectFormat(book: AdvancedBook, format: string, event: Event) {
+    event.stopPropagation();
+    book.selectedFormat = format;
   }
 
-  // Dynamically calculate statistics based on what is actually in PostgreSQL
   calculateDynamicStats(): void {
     const totalBooks = this.books.length;
     const totalCategories = this.rawCategories.length;
@@ -111,21 +186,28 @@ export class Home implements OnInit, AfterViewInit {
       { label: 'Technical Titles', value: `${totalBooks}+` },
       { label: 'Engineering Stacks', value: `${totalCategories}` },
       { label: 'Books in Stock', value: `${totalStock}` },
-      { label: 'Active Users', value: '12.4K+' } // We would need a UserService call for this!
+      { label: 'Active Users', value: '12.4K+' } 
     ];
   }
 
-  filterByStack(stackName: string): void {
-    this.activeStack = stackName;
-    
-    if (stackName === 'All') {
-      this.loadBooks();
-    } else {
-      const category = this.rawCategories.find(c => c.name === stackName);
-      if (category) {
-        this.loadBooks(category.id);
-      }
-    }
+  loadVideos(): void {
+    this.videoService.getAllVideos().subscribe({
+      next: (backendVideos) => {
+        this.videos = backendVideos;
+        this.triggerAnimations();
+      },
+      error: () => { console.warn('Video service not available yet.'); }
+    });
+  }
+
+  loadLabs(): void {
+    this.labService.getAllLabs().subscribe({
+      next: (backendLabs) => {
+        this.labs = backendLabs;
+        this.triggerAnimations();
+      },
+      error: () => { console.warn('Lab service not available yet.'); }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -152,10 +234,5 @@ export class Home implements OnInit, AfterViewInit {
       const animatedElements = this.el.nativeElement.querySelectorAll('.animate-on-scroll:not(.is-visible)');
       animatedElements.forEach((el: any) => this.observer.observe(el));
     }, 100);
-  }
-
-  selectFormat(book: AdvancedBook, format: string, event: Event) {
-    event.stopPropagation();
-    book.selectedFormat = format;
   }
 }

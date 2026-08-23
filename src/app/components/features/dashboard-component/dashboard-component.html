@@ -14,7 +14,6 @@
       </div>
     </header>
 
-    <!-- Admin Navigation Tabs -->
     <div class="admin-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
       <button class="glass-btn" [class.active-tab]="activeTab === 'overview'" (click)="setTab('overview')">Overview</button>
       <button class="glass-btn" [class.active-tab]="activeTab === 'books'" (click)="setTab('books')">Manage Books</button>
@@ -23,13 +22,11 @@
       <button class="glass-btn" [class.active-tab]="activeTab === 'categories'" (click)="setTab('categories')">Manage Categories</button>
     </div>
 
-    <!-- Loading State -->
     <div class="loading-state" *ngIf="isLoading">
       <div class="spinner"></div>
       <p>Loading admin data...</p>
     </div>
 
-    <!-- TAB 1: OVERVIEW -->
     <div class="dashboard-content" *ngIf="!isLoading && activeTab === 'overview'">
       <div class="stats-grid">
         <div class="stat-card glass-panel" *ngFor="let stat of stats">
@@ -59,8 +56,8 @@
               </thead>
               <tbody>
                 <tr *ngFor="let order of recentOrders">
-                  <td class="highlight">{{ order.orderId }}</td>
-                  <td>{{ order.userId }}</td>
+                  <td class="highlight" [title]="order.orderId">{{ order.orderId | slice:0:8 }}...</td>
+                  <td [title]="order.userId">{{ order.userId | slice:0:8 }}...</td>
                   <td class="text-muted">{{ order.orderDate | date:'shortDate' }}</td>
                   <td class="highlight">${{ order.totalAmount | number:'1.2-2' }}</td>
                   <td><span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></td>
@@ -72,7 +69,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: MANAGE BOOKS -->
+    <!-- Books Tab -->
     <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'books'">
       <div class="panel-header">
         <h2>Book Catalog Management</h2>
@@ -102,7 +99,7 @@
       </table>
     </div>
 
-    <!-- TAB 3: MANAGE USERS -->
+    <!-- Users Tab -->
     <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'users'">
       <div class="panel-header">
         <h2>Registered Users</h2>
@@ -146,7 +143,7 @@
       </table>
     </div>
 
-    <!-- TAB 4: MANAGE ORDERS -->
+    <!-- Orders Tab -->
     <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'orders'">
       <div class="panel-header">
         <h2>All System Orders</h2>
@@ -163,7 +160,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let order of allOrders">
-            <td class="highlight">{{ order.orderId }}</td>
+            <td class="highlight" [title]="order.orderId">{{ order.orderId | slice:0:8 }}...</td>
             <td>{{ order.orderDate | date:'mediumDate' }}</td>
             <td>${{ order.totalAmount | number:'1.2-2' }}</td>
             <td><span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></td>
@@ -180,7 +177,7 @@
       </table>
     </div>
 
-    <!-- TAB 5: MANAGE CATEGORIES -->
+    <!-- Categories Tab -->
     <div class="panel-section glass-panel" *ngIf="!isLoading && activeTab === 'categories'">
       <div class="panel-header">
         <h2>Category Management</h2>
@@ -209,7 +206,7 @@
   </div>
 </div>
 
-<!-- ADD BOOK MODAL -->
+<!-- Add Book Modal -->
 <div class="modal-backdrop" *ngIf="showAddBookModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000;">
   <div class="glass-panel modal-content" style="background:#1a1a1a; padding: 30px; border-radius: 12px; width: 450px;">
     <h2>Add New Book</h2>
@@ -233,7 +230,7 @@
   </div>
 </div>
 
-<!-- ADD CATEGORY MODAL -->
+<!-- Add Category Modal -->
 <div class="modal-backdrop" *ngIf="showAddCategoryModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:1000;">
   <div class="glass-panel modal-content" style="background:#1a1a1a; padding: 30px; border-radius: 12px; width: 450px;">
     <h2>Add New Category</h2>

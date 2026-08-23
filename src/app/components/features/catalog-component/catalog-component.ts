@@ -5,14 +5,17 @@ import { BookService } from '../../../services/book-service';
 import { CategoryService } from '../../../services/category-service';
 import { Book } from '../../../models/book';
 import { RouterLink } from '@angular/router';
+import Keycloak from 'keycloak-js'; // <-- Import Keycloak
 import { CartService } from '../../../services/cart-service';
+import { OrderStatusPipe } from '../../../pipes/order-status-pipe';
+import { TruncatePipe } from '../../../pipes/truncate-pipe';
 
 interface CategoryCount { name: string; count: number; id?: string; }
 
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, OrderStatusPipe, TruncatePipe],
   templateUrl: './catalog-component.html',
   styleUrls: ['./catalog-component.css']
 })
@@ -20,6 +23,7 @@ export class CatalogComponent implements OnInit {
   private bookService = inject(BookService);
   private categoryService = inject(CategoryService);
   private cartService = inject(CartService);
+  private keycloak = inject(Keycloak);
 
   isLoading: boolean = true;
   viewMode: 'grid' | 'list' = 'grid';
@@ -29,9 +33,8 @@ export class CatalogComponent implements OnInit {
   categories: CategoryCount[] = [];
   
   categoryMap: { [id: string]: string } = {};
-  categoryIdMap: { [name: string]: string } = {}; // Maps name back to UUID for backend search
+  categoryIdMap: { [name: string]: string } = {}; 
 
-  // Filters & Pagination State
   searchQuery: string = '';
   selectedCategory: string = 'All';
   maxPrice: number = 150;
@@ -60,7 +63,6 @@ export class CatalogComponent implements OnInit {
           this.categoryIdMap[cat.name] = catId;
         });
 
-        // Load category options for the sidebar
         this.categories = [{ name: 'All', count: 0 }, ...backendCategories.map(c => ({ name: c.name, count: 0, id: c.id || c.categoryId }))];
 
         this.fetchBooks();
@@ -84,14 +86,13 @@ export class CatalogComponent implements OnInit {
       this.pageSize
     ).subscribe({
       next: (books: Book[]) => {
-        // Apply client-side filters for price range and stock
+
         let results = books.filter(book => {
           const matchPrice = book.price <= this.maxPrice;
           const matchStock = this.inStockOnly ? book.quantity > 0 : true;
           return matchPrice && matchStock;
         });
 
-        // Sorting Logic
         if (this.sortBy === 'price-asc') results.sort((a, b) => a.price - b.price);
         if (this.sortBy === 'price-desc') results.sort((a, b) => b.price - a.price);
 
@@ -108,7 +109,7 @@ export class CatalogComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.currentPage = 0; // Reset page to 0 on new search or filter
+    this.currentPage = 0; 
     this.fetchBooks();
   }
 
@@ -141,15 +142,30 @@ export class CatalogComponent implements OnInit {
   }
 
   addToCart(book: Book): void {
-    const cartItem = {
-      bookId: book.bookId || (book as any).id,
-      title: book.title,
-      price: book.price,
-      quantity: 1,
-      imgURL: book.imgURL || ''
-    };
-    this.cartService.addToCart(cartItem);
+    const tokenParsed: any = this.keycloak.tokenParsed;
+    const userId = tokenParsed?.sub;
+
+    if (!userId) {
+      alert('Please log in to add items to your cart.');
+      return;
+    }
+
+    const bookId = book.bookId || (book as any).id;
+    
+    this.cartService.addItemToCart(userId, {
+      bookId: bookId,
+      quantity: 1
+    }).subscribe({
+      next: () => {
+        alert(`${book.title} added to your cart successfully!`);
+      },
+      error: (err) => {
+        console.error('Failed to add item to cart', err);
+        alert('Could not add item to cart. Check stock availability.');
+      }
+    });
   }
+
   getBookId(book: any): string {
     return book.bookId || book.id;
   }

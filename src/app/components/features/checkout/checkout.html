@@ -7,7 +7,6 @@
 
     <div class="checkout-grid">
       
-      <!-- Left Column: Shipping Form Only -->
       <div class="checkout-forms">
         <div class="error-banner" *ngIf="errorMessage">
           {{ errorMessage }}
@@ -44,24 +43,23 @@
         </form>
       </div>
 
-      <!-- Right Column: Order Summary -->
       <aside class="order-summary-col">
         <div class="summary-card glass-panel">
           <h2>Order Summary</h2>
           
           <div class="cart-items-list">
             <div class="cart-item" *ngFor="let item of cartItems">
-              <img [src]="item.imgURL" [alt]="item.title">
+              <!-- If image isn't part of CartItemResponse, fallback or bind if mapped -->
               <div class="item-details">
                 <h4>{{ item.title }}</h4>
                 <div class="item-quantity-controls" style="display: flex; align-items: center; gap: 6px; margin-top: 6px;">
                   <button type="button" (click)="decreaseQuantity(item)" class="qty-btn">-</button>
                   <span>{{ item.quantity }}</span>
                   <button type="button" (click)="increaseQuantity(item)" class="qty-btn">+</button>
-                  <button type="button" (click)="removeItem(item.bookId)" style="background:transparent; border:none; color: #ff4d4d; cursor:pointer;" title="Remove">Remove</button>
+                  <button type="button" (click)="removeItem(item.cartItemId)" style="background:transparent; border:none; color: #ff4d4d; cursor:pointer;" title="Remove">Remove</button>
                 </div>
               </div>
-              <span class="item-price">${{ (item.price * item.quantity) | number:'1.2-2' }}</span>
+              <span class="item-price">${{ item.subtotal | number:'1.2-2' }}</span>
             </div>
           </div>
 

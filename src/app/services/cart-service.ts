@@ -1,78 +1,52 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-
-export interface CartItem {
-  bookId: string;
-  title: string;
-  price: number;
-  quantity: number;
-  imgURL: string;
-}
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { CartResponse } from '../models/cart-response';
+import { CartItemRequest } from '../models/cart-item-request';
+import { CartItemPatchRequest } from '../models/cart-item-patch-request';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
-  private cartKey = 'bookstore_cart';
-  
-  private cartSubject = new BehaviorSubject<CartItem[]>([]);
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:8080/api';
+
+  private cartSubject = new BehaviorSubject<CartResponse | null>(null);
   cart$ = this.cartSubject.asObservable();
 
-  constructor() {
-    this.loadCart();
+  loadCart(userId: string): Observable<CartResponse> {
+    return this.http.get<CartResponse>(`${this.apiUrl}/users/${userId}/cart`).pipe(
+      tap(cart => this.cartSubject.next(cart))
+    );
   }
 
-  // Gets the current list synchronously (fixes the error in your screenshot!)
-  getItems(): CartItem[] {
-    return this.cartSubject.value;
+  addItemToCart(userId: string, request: CartItemRequest): Observable<CartResponse> {
+    return this.http.post<CartResponse>(`${this.apiUrl}/users/${userId}/cart/items`, request).pipe(
+      tap(updatedCart => this.cartSubject.next(updatedCart))
+    );
   }
 
-  addToCart(item: CartItem): void {
-    const currentCart = this.cartSubject.value;
-    const existingItem = currentCart.find(i => i.bookId === item.bookId);
-
-    if (existingItem) {
-      existingItem.quantity += item.quantity;
-
-    } else {
-      currentCart.push(item);
-    }
-    this.updateCart(currentCart);
+  updateCartItemQuantity(cartItemId: string, request: CartItemPatchRequest): Observable<CartResponse> {
+    return this.http.patch<CartResponse>(`${this.apiUrl}/cart-items/${cartItemId}`, request).pipe(
+      tap(updatedCart => this.cartSubject.next(updatedCart))
+    );
   }
 
-  updateQuantity(bookId: string, quantity: number): void {
-    const currentCart = this.cartSubject.value;
-    const item = currentCart.find(i => i.bookId === bookId);
-    
-    if (item) {
-      item.quantity = quantity;
-      this.updateCart(currentCart);
-    }
+  removeCartItem(cartItemId: string, userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/cart-items/${cartItemId}`).pipe(
+      tap(() => this.loadCart(userId).subscribe()) // Refresh cart state after deletion
+    );
   }
 
-  removeFromCart(bookId: string): void {
-    const currentCart = this.cartSubject.value.filter(i => i.bookId !== bookId);
-    this.updateCart(currentCart);
-  }
-
-  clearCart(): void {
-    this.updateCart([]);
-  }
-
-  private updateCart(newCart: CartItem[]): void {
-    this.cartSubject.next(newCart);
-    localStorage.setItem(this.cartKey, JSON.stringify(newCart));
-  }
-
-  private loadCart(): void {
-    const savedCart = localStorage.getItem(this.cartKey);
-    if (savedCart) {
-      try {
-        this.cartSubject.next(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Failed to parse cart', error);
-        this.updateCart([]);
-      }
-    }
+  clearCart(userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${userId}/cart`).pipe(
+      tap(() => {
+        const current = this.cartSubject.value;
+        if (current) {
+          this.cartSubject.next({ ...current, items: [], totalAmount: 0 });
+        }
+      })
+    );
   }
 }

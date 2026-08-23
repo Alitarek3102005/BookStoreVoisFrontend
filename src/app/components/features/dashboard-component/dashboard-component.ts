@@ -2,7 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import Keycloak from 'keycloak-js'; // <-- Added Keycloak
 import { UserService } from '../../../services/user-service';
 import { environment } from '../../../../environments/environment';
 
@@ -16,7 +17,8 @@ import { environment } from '../../../../environments/environment';
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
   private userService = inject(UserService);
-  private apiUrl = environment.apiUrl;
+  private keycloak = inject(Keycloak); // <-- Available if you need Admin profile details
+  private apiUrl = environment.apiUrl || 'http://localhost:8080/api';
 
   activeTab: 'overview' | 'books' | 'users' | 'orders' | 'categories' = 'overview';
   isLoading = true;
@@ -28,7 +30,6 @@ export class DashboardComponent implements OnInit {
   allOrders: any[] = [];
   allCategories: any[] = [];
 
-  // Modals & Forms State
   showAddBookModal = false;
   showAddCategoryModal = false;
   
@@ -38,14 +39,6 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAdminData();
-  }
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = (window as any).keycloak?.token || ''; 
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
   }
 
   setTab(tab: 'overview' | 'books' | 'users' | 'orders' | 'categories'): void {
@@ -62,6 +55,7 @@ export class DashboardComponent implements OnInit {
 
     setTimeout(() => {
       this.stats = [
+        // Real logic could calculate total revenue from COMPLETED orders
         { title: 'Total Revenue', value: '$12,450.00', trend: 15.2, icon: 'revenue' },
         { title: 'Active Orders', value: this.allOrders.length, trend: 5.4, icon: 'orders' },
         { title: 'Total Customers', value: this.allUsers.length, trend: 12.1, icon: 'users' },
@@ -78,6 +72,8 @@ export class DashboardComponent implements OnInit {
     if (tab === 'categories') this.fetchCategories();
   }
 
+  // NOTE: Auth headers are now automatically attached by auth.interceptor.ts!
+  
   fetchBooks(): void {
     this.http.get<any[]>(`${this.apiUrl}/books`).subscribe({
       next: (data) => this.allBooks = data,
@@ -86,14 +82,14 @@ export class DashboardComponent implements OnInit {
   }
 
   fetchUsers(): void {
-    this.http.get<any[]>(`${this.apiUrl}/users`, { headers: this.getAuthHeaders() }).subscribe({
+    this.http.get<any[]>(`${this.apiUrl}/users`).subscribe({
       next: (data) => this.allUsers = data,
       error: (err) => console.error('Failed to load users', err)
     });
   }
 
   fetchOrders(): void {
-    this.http.get<any[]>(`${this.apiUrl}/orders`, { headers: this.getAuthHeaders() }).subscribe({
+    this.http.get<any[]>(`${this.apiUrl}/orders`).subscribe({
       next: (data) => {
         this.allOrders = data;
         this.recentOrders = data.slice(0, 5);
@@ -112,7 +108,6 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // --- BOOK ACTIONS ---
   openAddBookModal(): void { this.showAddBookModal = true; }
   closeAddBookModal(): void { this.showAddBookModal = false; }
 
@@ -122,7 +117,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.http.post(`${this.apiUrl}/books`, this.newBook, { headers: this.getAuthHeaders() }).subscribe({
+    this.http.post(`${this.apiUrl}/books`, this.newBook).subscribe({
       next: () => {
         alert('Book added successfully!');
         this.closeAddBookModal();
@@ -138,19 +133,18 @@ export class DashboardComponent implements OnInit {
 
   deleteBook(bookId: string): void {
     if (confirm('Are you sure you want to delete this book?')) {
-      this.http.delete(`${this.apiUrl}/books/${bookId}`, { headers: this.getAuthHeaders() }).subscribe({
+      this.http.delete(`${this.apiUrl}/books/${bookId}`).subscribe({
         next: () => this.fetchBooks(),
         error: (err) => alert('Cannot delete book if tied to active records/order history.')
       });
     }
   }
 
-  // --- CATEGORY ACTIONS ---
   openAddCategoryModal(): void { this.showAddCategoryModal = true; }
   closeAddCategoryModal(): void { this.showAddCategoryModal = false; }
 
   submitNewCategory(): void {
-    this.http.post(`${this.apiUrl}/categories`, this.newCategory, { headers: this.getAuthHeaders() }).subscribe({
+    this.http.post(`${this.apiUrl}/categories`, this.newCategory).subscribe({
       next: () => {
         alert('Category added successfully!');
         this.closeAddCategoryModal();
@@ -166,9 +160,9 @@ export class DashboardComponent implements OnInit {
 
   deleteCategory(categoryId: string): void {
     if (confirm('Are you sure you want to delete this category?')) {
-      this.http.delete(`${this.apiUrl}/categories/${categoryId}`, { headers: this.getAuthHeaders() }).subscribe({
+      this.http.delete(`${this.apiUrl}/categories/${categoryId}`).subscribe({
         next: () => this.fetchCategories(),
-        error: (err) => alert('Cannot delete category if books are still assigned to it.')
+        error: (err) => alert(err.error?.message || 'Cannot delete category if books are still assigned to it.')
       });
     }
   }
@@ -193,10 +187,12 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // --- ORDER ACTIONS ---
   updateOrderStatus(orderId: string, newStatus: string): void {
-    this.http.patch(`${this.apiUrl}/orders/${orderId}`, { status: newStatus }, { headers: this.getAuthHeaders() }).subscribe({
-      next: () => this.fetchOrders(),
+    this.http.patch(`${this.apiUrl}/orders/${orderId}`, { status: newStatus }).subscribe({
+      next: () => {
+        alert(`Order status updated to ${newStatus}`);
+        this.fetchOrders();
+      },
       error: (err) => alert('Failed to update order status.')
     });
   }

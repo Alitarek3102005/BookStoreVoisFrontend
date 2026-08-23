@@ -4,13 +4,12 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Book } from '../models/book';
 
-// If your backend getAllBooks returns a direct List<BookResponse> based on your OpenAPI interface:
 @Injectable({ providedIn: 'root' })
 export class BookService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/books`;
 
-  searchBooks(title?: string, author?: string, categoryId?: string, page: number = 0, size: number = 8): Observable<Book[]> {
+  searchBooks(title?: string, author?: string, categoryId?: string, page: number = 0, size: number = 8, sort?: string): Observable<Book[]> {
     let params = new HttpParams()
       .set('page', page)
       .set('size', size);
@@ -18,6 +17,7 @@ export class BookService {
     if (title) params = params.set('title', title);
     if (author) params = params.set('author', author);
     if (categoryId) params = params.set('categoryId', categoryId);
+    if (sort) params = params.set('sort', sort);
 
     return this.http.get<Book[]>(this.apiUrl, { params });
   }

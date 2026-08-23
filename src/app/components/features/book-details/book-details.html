@@ -1,11 +1,9 @@
 <div class="details-page" *ngIf="!isLoading && book">
   
-  <!-- Ambient background glow based on the book cover -->
   <div class="ambient-bg" [style.backgroundImage]="'url(' + book.imgURL + ')'"></div>
   
   <div class="details-container">
     
-    <!-- Breadcrumb Navigation -->
     <nav class="breadcrumb">
       <button class="back-btn" (click)="goBack()">← Back to Catalog</button>
       <span class="divider">/</span>
@@ -14,10 +12,8 @@
       <span class="current">{{ book.title }}</span>
     </nav>
 
-    <!-- Main Hero Section -->
     <div class="main-content-grid">
       
-      <!-- Left Column: 3D Showcase -->
       <div class="showcase-col">
         <div class="book-stage-large">
           <div class="book-3d-large">
@@ -27,7 +23,6 @@
         </div>
       </div>
 
-      <!-- Right Column: Details & Purchasing -->
       <div class="purchase-col glass-panel">
         <div class="badge-row">
           <span class="status-badge" *ngIf="book.quantity < 5">LOW STOCK</span>
@@ -46,7 +41,6 @@
 
         <p class="short-desc">{{ book.description }}</p>
 
-        <!-- Checkout Actions -->
         <div class="action-section">
           <div class="price-display">
             ${{ totalPrice }}
@@ -69,12 +63,11 @@
       </div>
     </div>
 
-    <!-- Extended Info Tabs -->
     <div class="extended-info glass-panel">
       <div class="tabs-header">
         <button [class.active]="activeTab === 'description'" (click)="activeTab = 'description'">Overview</button>
         <button [class.active]="activeTab === 'contents'" (click)="activeTab = 'contents'">Table of Contents</button>
-        <button [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">Reviews</button>
+        <button [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">Reviews ({{ reviews.length }})</button>
       </div>
       
       <div class="tab-content">
@@ -90,12 +83,44 @@
         </div>
         
         <div *ngIf="activeTab === 'reviews'" class="reviews-tab">
-          <div class="mock-review">
-            <div class="review-header">
-              <strong>Software Engineer</strong> <span class="stars">★★★★★</span>
+          
+          <!-- Submit Review Form -->
+          <div class="review-form-container glass-panel" style="margin-bottom: 25px; padding: 20px; border-radius: 12px;">
+            <h4 style="margin-bottom: 15px;">Leave a Review</h4>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="display: block; margin-bottom: 5px;">Rating:</label>
+              <select [(ngModel)]="newRating" class="form-control" style="padding: 8px; width: 100%; border-radius: 6px;">
+                <option [value]="5">★★★★★ (5)</option>
+                <option [value]="4">★★★★☆ (4)</option>
+                <option [value]="3">★★★☆☆ (3)</option>
+                <option [value]="2">★★☆☆☆ (2)</option>
+                <option [value]="1">★☆☆☆☆ (1)</option>
+              </select>
             </div>
-            <p>"An absolute must-read resource."</p>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <textarea [(ngModel)]="newComment" placeholder="Write your thoughts about this book..." class="form-control" rows="3" style="width: 100%; padding: 10px; border-radius: 6px;"></textarea>
+            </div>
+            <button class="btn-glow" (click)="submitReview()" style="padding: 10px 20px; cursor: pointer;">Submit Review</button>
           </div>
+
+          <!-- Reviews List -->
+          <div *ngIf="reviews.length === 0" class="no-reviews" style="text-align: center; padding: 20px; opacity: 0.7;">
+            <p>No reviews yet. Be the first to review this book!</p>
+          </div>
+
+          <div class="review-item" *ngFor="let rev of reviews" style="margin-bottom: 15px; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <div class="review-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <strong>{{ rev.username || 'Book Reader' }}</strong> 
+              <span class="stars" style="color: #f39c12;">
+                <ng-container *ngFor="let s of [1,2,3,4,5]">
+                  {{ s <= rev.rating ? '★' : '☆' }}
+                </ng-container>
+              </span>
+              <span class="review-date" style="font-size: 0.8rem; opacity: 0.6;">{{ rev.createdAt | date:'mediumDate' }}</span>
+            </div>
+            <p style="margin: 0;">{{ rev.comment }}</p>
+          </div>
+
         </div>
       </div>
     </div>
@@ -103,7 +128,6 @@
   </div>
 </div>
 
-<!-- Loading State -->
 <div class="loading-screen" *ngIf="isLoading">
   <div class="spinner"></div>
 </div>

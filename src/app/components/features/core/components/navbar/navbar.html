@@ -1,6 +1,5 @@
 <nav class="navbar" [class.scrolled]="isScrolled">
   <div class="nav-container">
-    <!-- Logo -->
     <a routerLink="/" class="logo">
       <span class="glow-text">Virtual Bookstore</span>
     </a>
@@ -58,7 +57,6 @@
         />
       </div>
 
-      <!-- Cart Button (Visible ONLY when authenticated) -->
       <button
         class="icon-btn cart-btn"
         routerLink="/checkout"
@@ -83,7 +81,6 @@
         }}</span>
       </button>
 
-      <!-- Profile Widget (Shows when logged in) -->
       <div class="profile-widget" *ngIf="isAuthenticated">
         <div class="role-badge" *ngIf="userRole === 'ADMIN'">{{ userRole }}</div>
         <a routerLink="/profile" class="avatar" [title]="username">{{
@@ -116,7 +113,6 @@
         </button>
       </div>
 
-      <!-- Mobile Menu Toggle -->
       <button class="mobile-toggle" (click)="toggleMobileMenu()">
         <svg
           *ngIf="!isMobileMenuOpen"

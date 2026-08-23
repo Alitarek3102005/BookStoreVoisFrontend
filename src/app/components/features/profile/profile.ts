@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Keycloak from 'keycloak-js';
-import { User } from '../../../models/user'; // Adjust path if needed
+import { User } from '../../../models/user'; 
 import { UserService } from '../../../services/user-service';
 
 @Component({
@@ -65,13 +65,11 @@ export class Profile implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Use a partial payload without a password
     const patchPayload: Partial<User> = {
       username: this.profile.username,
       email: this.profile.email
     };
 
-    // Use patchUser instead of updateUser
     this.userService.patchUser(this.profile.userId, patchPayload).subscribe({
       next: () => {
         this.isLoading = false;
@@ -100,7 +98,6 @@ export class Profile implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // PUT requires the full object including the new password
     const updatePayload: User = {
       username: this.profile.username,
       email: this.profile.email,

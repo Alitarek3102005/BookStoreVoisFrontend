@@ -17,7 +17,7 @@ export class Register {
 
   username = '';
   email = '';
-  address = ''; // Note: If your backend User model doesn't have address yet, it will ignore it safely or you can add it to your User DTO
+  address = ''; 
   password = '';
   confirmPassword = '';
   
@@ -52,6 +52,7 @@ export class Register {
     const newUser = {
       username: this.username,
       email: this.email,
+      address: this.address,
       password: this.password
     };
 

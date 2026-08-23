@@ -10,16 +10,15 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './footer.html',
   styleUrls: ['./footer.css']
 })
-export class Footer{
+export class Footer {
   email: string = '';
   currentYear: number = new Date().getFullYear();
 
   subscribe() {
     if (this.email.trim()) {
       console.log('Subscribed with:', this.email);
-      // Future: Call newsletter subscription API
       this.email = '';
-      alert('Thank you for subscribing to our engineering newsletter!');
+      alert('Thank you for subscribing to Virtual Bookstore updates!');
     }
   }
 }

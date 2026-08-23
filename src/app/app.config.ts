@@ -14,7 +14,6 @@ const springBootApiCondition = createInterceptorCondition<IncludeBearerTokenCond
   urlPattern: /^(http:\/\/localhost:8080)(\/.*)?$/i
 });
 
-// Safely retrieve tokens to bypass strict browser SameSite cookie blocking in dev mode
 const storedToken = localStorage.getItem('kc_token');
 const storedRefreshToken = localStorage.getItem('kc_refresh_token');
 
@@ -35,7 +34,6 @@ export const appConfig: ApplicationConfig = {
         onLoad: 'check-sso',
         silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
         checkLoginIframe: false,
-        // Inject the saved tokens directly into Keycloak's boot sequence
         token: storedToken ? storedToken : undefined,
         refreshToken: storedRefreshToken ? storedRefreshToken : undefined
       },

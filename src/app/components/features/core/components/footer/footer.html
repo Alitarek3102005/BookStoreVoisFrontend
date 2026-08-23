@@ -1,50 +1,47 @@
 <footer class="site-footer">
   <div class="footer-container">
     
-    <!-- Top Grid Section -->
     <div class="footer-grid">
       
-      <!-- Column 1: Brand -->
       <div class="footer-col brand-col">
         <a routerLink="/" class="logo">
           <span class="glow-text">Virtual Bookstore</span>
         </a>
         <p class="brand-desc">
-          Empowering software engineers with premium resources, interactive WebGL labs, and enterprise architecture masterclasses.
+          A secure enterprise microservices e-commerce platform built with Java Spring Boot, Angular, and Keycloak authentication.
         </p>
         <div class="social-links">
-          <a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a>
-          <a href="#" aria-label="Twitter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a>
-          <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a>
+          <a href="https://github.com" target="_blank" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          </a>
+          <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+          </a>
         </div>
       </div>
 
-      <!-- Column 2: Quick Links -->
       <div class="footer-col">
-        <h3>Explore</h3>
+        <h3>Navigation</h3>
         <ul class="footer-links">
-          <li><a routerLink="/catalog">Book Catalog</a></li>
-          <li><a routerLink="/masterclasses">Masterclasses</a></li>
-          <li><a routerLink="/labs">Interactive Labs</a></li>
-          <li><a routerLink="/authors">Our Authors</a></li>
+          <li><a routerLink="/">Home Catalog</a></li>
+          <li><a routerLink="/cart">Shopping Cart</a></li>
+          <li><a routerLink="/orders">Order History</a></li>
+          <li><a routerLink="/dashboard">Admin Dashboard</a></li>
         </ul>
       </div>
 
-      <!-- Column 3: Resources -->
       <div class="footer-col">
-        <h3>Resources</h3>
+        <h3>Architecture & Docs</h3>
         <ul class="footer-links">
-          <li><a routerLink="/api-docs">API Documentation</a></li>
-          <li><a routerLink="/support">Help & Support</a></li>
-          <li><a routerLink="/system-status">System Status</a></li>
-          <li><a routerLink="/faq">FAQ</a></li>
+          <li><a href="http://localhost:8080/swagger-ui/index.html" target="_blank">Swagger OpenAPI</a></li>
+          <li><a href="http://localhost:8080/v3/api-docs" target="_blank">API Specs</a></li>
+          <li><a routerLink="/cart">Spring Security OIDC</a></li>
         </ul>
       </div>
 
-      <!-- Column 4: Newsletter -->
       <div class="footer-col newsletter-col">
         <h3>Stay Updated</h3>
-        <p>Get the latest releases on Spring Boot, .NET, and Angular.</p>
+        <p>Get notified about new book catalog releases and system updates.</p>
         <div class="subscribe-form">
           <input type="email" placeholder="Email address..." [(ngModel)]="email" (keyup.enter)="subscribe()">
           <button class="submit-btn" (click)="subscribe()">
@@ -55,12 +52,11 @@
 
     </div>
 
-    <!-- Bottom Bar -->
     <div class="footer-bottom">
-      <p>&copy; {{ currentYear }} Virtual Bookstore System. All rights reserved.</p>
+      <p>&copy; {{ currentYear }} Virtual Bookstore Platform. All rights reserved.</p>
       <div class="legal-links">
-        <a routerLink="/privacy">Privacy Policy</a>
-        <a routerLink="/terms">Terms of Service</a>
+        <a routerLink="/">Privacy Policy</a>
+        <a routerLink="/">Terms of Service</a>
       </div>
     </div>
 

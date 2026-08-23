@@ -1,6 +1,5 @@
 <div class="auth-layout">
   
-  <!-- Ambient Background Glow -->
   <div class="ambient-glow"></div>
 
   <div class="auth-card glass-panel">
@@ -15,13 +14,11 @@
 
     <form class="auth-form" (ngSubmit)="onSubmit()">
       
-      <!-- Error Banner -->
       <div class="error-banner" *ngIf="errorMessage">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         {{ errorMessage }}
       </div>
 
-      <!-- Username Input -->
       <div class="form-group">
         <label for="username">Username</label>
         <div class="input-wrapper">
@@ -30,7 +27,6 @@
         </div>
       </div>
 
-      <!-- Email Input -->
       <div class="form-group">
         <label for="email">Email Address</label>
         <div class="input-wrapper">
@@ -39,7 +35,6 @@
         </div>
       </div>
 
-      <!-- Address Input -->
       <div class="form-group">
         <label for="address">Shipping Address</label>
         <div class="input-wrapper">
@@ -48,10 +43,8 @@
         </div>
       </div>
 
-      <!-- Password Grid (Side by side on desktop) -->
       <div class="password-grid">
         
-        <!-- Password Input -->
         <div class="form-group">
           <label for="password">Password</label>
           <div class="input-wrapper">
@@ -65,9 +58,8 @@
           </div>
         </div>
 
-        <!-- Confirm Password Input -->
         <div class="form-group">
-          <label for="confirmPassword">Confirm</label>
+          <label for="confirmPassword">Confirm Password</label>
           <div class="input-wrapper">
             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             <input [type]="showPassword ? 'text' : 'password'" id="confirmPassword" name="confirmPassword" [(ngModel)]="confirmPassword" placeholder="••••••••" autocomplete="new-password" required>
@@ -76,7 +68,6 @@
 
       </div>
 
-      <!-- Submit Button -->
       <button type="submit" class="submit-btn btn-glow" [disabled]="isLoading">
         <span *ngIf="!isLoading">Create Account</span>
         <div class="spinner" *ngIf="isLoading"></div>

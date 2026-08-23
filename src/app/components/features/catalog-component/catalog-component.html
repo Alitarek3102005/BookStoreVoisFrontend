@@ -7,7 +7,6 @@
   </header>
 
   <div class="catalog-layout">
-    <!-- Sidebar -->
     <aside class="catalog-sidebar glass-panel">
       <div class="filter-group">
         <h3>Search</h3>
@@ -56,7 +55,6 @@
     </aside>
 
     <main class="catalog-content">
-      <!-- Advanced Top Bar with View Toggles -->
       <div class="content-top-bar glass-panel">
         <span class="results-count"
           >Showing {{ filteredBooks.length }} results (Total:
@@ -90,7 +88,6 @@
         </div>
       </div>
 
-      <!-- SKELETON LOADERS -->
       <div class="book-container" [ngClass]="viewMode" *ngIf="isLoading">
         <div class="skeleton-card glass-panel" *ngFor="let s of skeletonArray">
           <div class="skeleton-img pulse"></div>
@@ -103,7 +100,6 @@
         </div>
       </div>
 
-      <!-- ACTUAL CONTENT -->
       <div class="book-container" [ngClass]="viewMode" *ngIf="!isLoading">
         <div class="premium-book-card" *ngFor="let book of filteredBooks">
           <div class="book-stage" (click)="openQuickView(book)">
@@ -126,7 +122,7 @@
               getCategoryName(book.categoryId)
             }}</span>
             <p class="list-desc" *ngIf="viewMode === 'list'">
-              {{ book.description }}
+              {{ (book.description || '') | truncate:150 }}
             </p>
 
             <div class="action-row">
@@ -154,7 +150,6 @@
         </div>
       </div>
 
-      <!-- PAGINATION CONTROLS -->
       <div
         class="pagination-controls glass-panel"
         *ngIf="totalPages > 1"
