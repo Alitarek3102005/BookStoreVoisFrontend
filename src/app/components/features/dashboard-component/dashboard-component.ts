@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import Keycloak from 'keycloak-js'; // <-- Added Keycloak
+import Keycloak from 'keycloak-js'; 
 import { UserService } from '../../../services/user-service';
 import { environment } from '../../../../environments/environment';
 
@@ -17,7 +17,7 @@ import { environment } from '../../../../environments/environment';
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
   private userService = inject(UserService);
-  private keycloak = inject(Keycloak); // <-- Available if you need Admin profile details
+  private keycloak = inject(Keycloak); 
   private apiUrl = environment.apiUrl || 'http://localhost:8080/api';
 
   activeTab: 'overview' | 'books' | 'users' | 'orders' | 'categories' = 'overview';
@@ -53,16 +53,10 @@ export class DashboardComponent implements OnInit {
     this.fetchUsers();
     this.fetchCategories();
 
+    // Fallback toggle for loading state
     setTimeout(() => {
-      this.stats = [
-        // Real logic could calculate total revenue from COMPLETED orders
-        { title: 'Total Revenue', value: '$12,450.00', trend: 15.2, icon: 'revenue' },
-        { title: 'Active Orders', value: this.allOrders.length, trend: 5.4, icon: 'orders' },
-        { title: 'Total Customers', value: this.allUsers.length, trend: 12.1, icon: 'users' },
-        { title: 'Catalog Size', value: this.allBooks.length, trend: -2.3, icon: 'books' }
-      ];
       this.isLoading = false;
-    }, 600);
+    }, 800);
   }
 
   loadTabData(tab: string): void {
@@ -72,34 +66,59 @@ export class DashboardComponent implements OnInit {
     if (tab === 'categories') this.fetchCategories();
   }
 
-  // NOTE: Auth headers are now automatically attached by auth.interceptor.ts!
+  updateStats(): void {
+    // Dynamically calculate revenue from COMPLETED or SHIPPED orders
+    const totalRevenue = this.allOrders
+      .filter(o => o.status === 'COMPLETED' || o.status === 'SHIPPED')
+      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+    const activeOrdersCount = this.allOrders
+      .filter(o => o.status === 'PENDING' || o.status === 'PROCESSING').length;
+
+    // Filter out soft-deleted items from the display stats
+    const activeBooksCount = this.allBooks.filter(b => b.active !== false).length;
+
+    this.stats = [
+      { title: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, trend: 15.2, icon: 'revenue' },
+      { title: 'Active Orders', value: activeOrdersCount, trend: 5.4, icon: 'orders' },
+      { title: 'Total Customers', value: this.allUsers.length, trend: 12.1, icon: 'users' },
+      { title: 'Active Catalog', value: activeBooksCount, trend: -2.3, icon: 'books' }
+    ];
+  }
   
   fetchBooks(): void {
-    this.http.get<any[]>(`${this.apiUrl}/books`).subscribe({
-      next: (data) => this.allBooks = data,
+    this.http.get<any[]>(`${this.apiUrl}/books?size=1000`).subscribe({
+      next: (data) => {
+        this.allBooks = data;
+        this.updateStats();
+      },
       error: (err) => console.error('Failed to load books', err)
     });
   }
 
   fetchUsers(): void {
-    this.http.get<any[]>(`${this.apiUrl}/users`).subscribe({
-      next: (data) => this.allUsers = data,
+    this.http.get<any[]>(`${this.apiUrl}/users?size=1000`).subscribe({
+      next: (data) => {
+        this.allUsers = data;
+        this.updateStats();
+      },
       error: (err) => console.error('Failed to load users', err)
     });
   }
 
   fetchOrders(): void {
-    this.http.get<any[]>(`${this.apiUrl}/orders`).subscribe({
+    this.http.get<any[]>(`${this.apiUrl}/orders?size=1000&sort=orderDate,desc`).subscribe({
       next: (data) => {
         this.allOrders = data;
         this.recentOrders = data.slice(0, 5);
+        this.updateStats();
       },
       error: (err) => console.error('Failed to load orders', err)
     });
   }
 
   fetchCategories(): void {
-    this.http.get<any[]>(`${this.apiUrl}/categories`).subscribe({
+    this.http.get<any[]>(`${this.apiUrl}/categories?size=1000`).subscribe({
       next: (data) => {
         this.categories = data;
         this.allCategories = data;
@@ -132,10 +151,26 @@ export class DashboardComponent implements OnInit {
   }
 
   deleteBook(bookId: string): void {
-    if (confirm('Are you sure you want to delete this book?')) {
+    if (confirm('Are you sure you want to deactivate this book? It will be hidden from the catalog.')) {
       this.http.delete(`${this.apiUrl}/books/${bookId}`).subscribe({
-        next: () => this.fetchBooks(),
-        error: (err) => alert('Cannot delete book if tied to active records/order history.')
+        next: () => {
+          alert('Book deactivated successfully.');
+          this.fetchBooks();
+        },
+        error: (err) => alert('Failed to deactivate book.')
+      });
+    }
+  }
+
+  // NEW: Reactivate Book
+  reactivateBook(bookId: string): void {
+    if (confirm('Are you sure you want to reactivate this book?')) {
+      this.http.patch(`${this.apiUrl}/books/${bookId}`, { active: true }).subscribe({
+        next: () => {
+          alert('Book reactivated successfully.');
+          this.fetchBooks();
+        },
+        error: (err) => alert('Failed to reactivate book.')
       });
     }
   }
@@ -159,10 +194,26 @@ export class DashboardComponent implements OnInit {
   }
 
   deleteCategory(categoryId: string): void {
-    if (confirm('Are you sure you want to delete this category?')) {
+    if (confirm('Are you sure you want to deactivate this category?')) {
       this.http.delete(`${this.apiUrl}/categories/${categoryId}`).subscribe({
-        next: () => this.fetchCategories(),
-        error: (err) => alert(err.error?.message || 'Cannot delete category if books are still assigned to it.')
+        next: () => {
+          alert('Category deactivated successfully.');
+          this.fetchCategories();
+        },
+        error: (err) => alert(err.error?.message || 'Cannot deactivate category if active books are still assigned to it.')
+      });
+    }
+  }
+
+  // NEW: Reactivate Category
+  reactivateCategory(categoryId: string): void {
+    if (confirm('Are you sure you want to reactivate this category?')) {
+      this.http.patch(`${this.apiUrl}/categories/${categoryId}`, { active: true }).subscribe({
+        next: () => {
+          alert('Category reactivated successfully.');
+          this.fetchCategories();
+        },
+        error: (err) => alert('Failed to reactivate category.')
       });
     }
   }

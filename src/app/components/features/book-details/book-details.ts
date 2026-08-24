@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import Keycloak from 'keycloak-js'; // <-- Import Keycloak
+import Keycloak from 'keycloak-js';
 import { BookService } from '../../../services/book-service';
 import { CategoryService } from '../../../services/category-service';
 import { CartService } from '../../../services/cart-service';
@@ -24,7 +24,7 @@ export class BookDetails implements OnInit {
   private categoryService = inject(CategoryService);
   private cartService = inject(CartService);
   private reviewService = inject(ReviewService);
-  private keycloak = inject(Keycloak); // <-- Inject Keycloak
+  private keycloak = inject(Keycloak);
 
   book!: Book;
   categoryName: string = 'General';
@@ -36,19 +36,29 @@ export class BookDetails implements OnInit {
   newRating: number = 5;
   newComment: string = '';
 
+  // Current User & Edit State
+  currentUserId: string | null = null;
+  editingReviewId: string | null = null;
+  editRating: number = 5;
+  editComment: string = '';
+
   ngOnInit(): void {
+    const tokenParsed: any = this.keycloak.tokenParsed;
+    this.currentUserId = tokenParsed?.sub || null;
+
     const bookId = this.route.snapshot.paramMap.get('id');
     
     if (bookId) {
-      this.bookService.getAllBooks().subscribe({
-        next: (books: Book[]) => {
-          const found = books.find(b => (b.bookId || (b as any).id) === bookId);
-          if (found) {
-            this.book = found;
-            const targetId = this.book.bookId || (this.book as any).id;
+      // FIX: Use getBookById instead of getAllBooks to prevent pagination bugs
+      this.bookService.getBookById(bookId).subscribe({
+        next: (foundBook: Book) => {
+          this.book = foundBook;
+          const targetId = this.book.bookId || (this.book as any).id;
+          
+          if (this.book.categoryId) {
             this.loadCategoryName(this.book.categoryId);
-            this.loadReviews(targetId);
           }
+          this.loadReviews(targetId);
           this.isLoading = false;
         },
         error: (err) => {
@@ -63,12 +73,16 @@ export class BookDetails implements OnInit {
 
   loadCategoryName(categoryId: string): void {
     if (!categoryId) return;
-    this.categoryService.getAllCategories().subscribe({
-      next: (categories: any[]) => {
-        const cat = categories.find(c => (c.id || c.categoryId) === categoryId);
-        if (cat) {
-          this.categoryName = cat.name;
+    
+    // FIX: Use getCategoryById instead of getAllCategories
+    this.categoryService.getCategoryById(categoryId).subscribe({
+      next: (category: any) => {
+        if (category) {
+          this.categoryName = category.name;
         }
+      },
+      error: (err) => {
+        console.error('Failed to load category details:', err);
       }
     });
   }
@@ -85,17 +99,14 @@ export class BookDetails implements OnInit {
   }
 
   submitReview(): void {
-    const tokenParsed: any = this.keycloak.tokenParsed;
-    const userId = tokenParsed?.sub;
-
-    if (!userId) {
+    if (!this.currentUserId) {
       alert('You must be logged in to submit a review.');
       return;
     }
 
     const bookId = this.book.bookId || (this.book as any).id;
     const reviewPayload = {
-      userId: userId,
+      userId: this.currentUserId,
       rating: Number(this.newRating),
       comment: this.newComment
     };
@@ -112,6 +123,51 @@ export class BookDetails implements OnInit {
         alert('Failed to submit review. You may have already reviewed this book.');
       }
     });
+  }
+
+  startEditReview(rev: ReviewResponse): void {
+    this.editingReviewId = rev.reviewId;
+    this.editRating = rev.rating;
+    this.editComment = rev.comment;
+  }
+
+  cancelEditReview(): void {
+    this.editingReviewId = null;
+  }
+
+  saveEditedReview(reviewId: string): void {
+    const patchData = {
+      rating: Number(this.editRating),
+      comment: this.editComment
+    };
+
+    this.reviewService.patchReview(reviewId, patchData).subscribe({
+      next: (updatedReview) => {
+        const index = this.reviews.findIndex(r => r.reviewId === reviewId);
+        if (index !== -1) {
+          this.reviews[index] = updatedReview;
+        }
+        this.editingReviewId = null;
+      },
+      error: (err) => {
+        console.error('Failed to update review', err);
+        alert('Failed to update review.');
+      }
+    });
+  }
+
+  deleteReview(reviewId: string): void {
+    if (confirm('Are you sure you want to delete this review?')) {
+      this.reviewService.deleteReview(reviewId).subscribe({
+        next: () => {
+          this.reviews = this.reviews.filter(r => r.reviewId !== reviewId);
+        },
+        error: (err) => {
+          console.error('Failed to delete review', err);
+          alert('Failed to delete review.');
+        }
+      });
+    }
   }
 
   goBack(): void {
@@ -133,17 +189,14 @@ export class BookDetails implements OnInit {
   addToCart(): void {
     if (this.book.quantity === 0) return;
 
-    const tokenParsed: any = this.keycloak.tokenParsed;
-    const userId = tokenParsed?.sub;
-
-    if (!userId) {
+    if (!this.currentUserId) {
       alert('Please log in to add items to your cart.');
       return;
     }
 
     const bookId = this.book.bookId || (this.book as any).id;
     
-    this.cartService.addItemToCart(userId, {
+    this.cartService.addItemToCart(this.currentUserId, {
       bookId: bookId,
       quantity: this.quantityToCart
     }).subscribe({

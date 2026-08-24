@@ -1,187 +1,253 @@
 <div class="catalog-page">
+
+  <!-- ====== EDITORIAL HEADER ====== -->
   <header class="catalog-header">
-    <h1 class="page-title">The <span class="gradient-text">Library</span></h1>
-    <p class="page-subtitle">
-      Browse our complete collection of engineering resources.
-    </p>
+    <div class="header-top">
+      <span class="header-issue">issue 02</span>
+      <span class="header-pipe">—</span>
+      <span class="header-year">2026</span>
+    </div>
+
+    <div class="header-main">
+      <div class="header-portrait">
+        <div class="portrait-silhouette"></div>
+        <div class="portrait-glow"></div>
+      </div>
+
+      <div class="header-text">
+        <div class="eyebrow-stack">
+          <span class="eyebrow-line"></span>
+          <span class="eyebrow-label">motivation • image</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h1 class="page-title">
+          <span class="title-light">POWER</span>
+          <span class="title-bold gradient-text">THROUGH</span>
+        </h1>
+        <p class="page-subtitle">the complete engineering library</p>
+      </div>
+    </div>
+
+    <div class="header-bottom">
+      <span class="header-tag">✦ curated collection</span>
+      <span class="header-tag">► 1,200+ titles</span>
+      <span class="header-tag">◈ limited editions</span>
+    </div>
   </header>
 
+  <!-- ====== LAYOUT ====== -->
   <div class="catalog-layout">
-    <aside class="catalog-sidebar glass-panel">
-      <div class="filter-group">
-        <h3>Search</h3>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Title or Author..."
-          [(ngModel)]="searchQuery"
-          (input)="onFilterChange()"
-        />
-      </div>
-      <div class="filter-group">
-        <h3>Categories</h3>
-        <ul class="category-list">
-          <li
-            *ngFor="let cat of categories"
-            [class.active]="selectedCategory === cat.name"
-            (click)="selectedCategory = cat.name; onFilterChange()"
-          >
-            <span class="cat-name">{{ cat.name }}</span>
-          </li>
-        </ul>
-      </div>
-      <div class="filter-group">
-        <h3>Max Price: ${{ maxPrice }}</h3>
-        <input
-          type="range"
-          class="price-slider"
-          min="0"
-          max="150"
-          step="5"
-          [(ngModel)]="maxPrice"
-          (change)="onFilterChange()"
-        />
-      </div>
-      <div class="filter-group toggle-group">
-        <label class="toggle-label">
+
+    <!-- ====== SIDEBAR – editorial menu ====== -->
+    <aside class="catalog-sidebar">
+      <div class="sidebar-inner">
+        <!-- Search -->
+        <div class="filter-group search-group">
+          <div class="search-icon">⌕</div>
           <input
-            type="checkbox"
-            [(ngModel)]="inStockOnly"
+            type="text"
+            class="search-input"
+            placeholder="Search titles..."
+            [(ngModel)]="searchQuery"
+            (input)="onFilterChange()"
+          />
+        </div>
+
+        <!-- Categories -->
+        <div class="filter-group">
+          <h3 class="filter-label">Categories</h3>
+          <ul class="category-list">
+            <li
+              *ngFor="let cat of categories"
+              [class.active]="selectedCategory === cat.name"
+              (click)="selectedCategory = cat.name; onFilterChange()"
+            >
+              <span class="cat-name">{{ cat.name }}</span>
+              <span class="cat-count">{{ cat.count }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Price -->
+        <div class="filter-group">
+          <h3 class="filter-label">Budget</h3>
+          <div class="price-display">
+            <span>$0</span>
+            <span class="price-value">${{ maxPrice }}</span>
+          </div>
+          <input
+            type="range"
+            class="price-slider"
+            min="0"
+            max="150"
+            step="5"
+            [(ngModel)]="maxPrice"
             (change)="onFilterChange()"
           />
-          <span class="custom-checkbox"></span> In Stock Only
-        </label>
+        </div>
+
+        <!-- Stock toggle -->
+        <div class="filter-group toggle-group">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="inStockOnly" (change)="onFilterChange()" />
+            <span class="custom-checkbox"></span>
+            <span>Available only</span>
+          </label>
+        </div>
+
+        <!-- Active filters summary -->
+        <div class="filter-summary" *ngIf="selectedCategory !== 'All' || searchQuery || inStockOnly">
+          <span class="filter-summary-label">active filters</span>
+          <div class="filter-summary-tags">
+            <span class="filter-tag" *ngIf="selectedCategory !== 'All'">
+              {{ selectedCategory }}
+              <button (click)="selectedCategory = 'All'; onFilterChange()">×</button>
+            </span>
+            <span class="filter-tag" *ngIf="searchQuery">
+              "{{ searchQuery }}"
+              <button (click)="searchQuery = ''; onFilterChange()">×</button>
+            </span>
+            <span class="filter-tag" *ngIf="inStockOnly">
+              in stock
+              <button (click)="inStockOnly = false; onFilterChange()">×</button>
+            </span>
+          </div>
+        </div>
       </div>
     </aside>
 
+    <!-- ====== MAIN CONTENT ====== -->
     <main class="catalog-content">
-      <div class="content-top-bar glass-panel">
-        <span class="results-count"
-          >Showing {{ filteredBooks.length }} results (Total:
-          {{ totalElements }})</span
-        >
+
+      <!-- Top bar -->
+      <div class="content-top-bar">
+        <div class="results-section">
+          <span class="results-number">{{ filteredBooks.length }}</span>
+          <span class="results-label">titles</span>
+          <span class="results-pipe">|</span>
+          <span class="results-total">{{ totalElements }} total</span>
+        </div>
 
         <div class="toolbar-actions">
           <div class="view-toggles">
             <button
               [class.active]="viewMode === 'grid'"
               (click)="viewMode = 'grid'"
-              title="Grid View"
+              title="Grid"
+              class="view-btn"
             >
-              ⊞
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="10" y="0" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="0" y="10" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="10" y="10" width="6" height="6" rx="1" fill="currentColor"/>
+              </svg>
             </button>
             <button
               [class.active]="viewMode === 'list'"
               (click)="viewMode = 'list'"
-              title="List View"
+              title="List"
+              class="view-btn"
             >
-              ☰
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="0" y="0" width="16" height="4" rx="1" fill="currentColor"/>
+                <rect x="0" y="6" width="16" height="4" rx="1" fill="currentColor"/>
+                <rect x="0" y="12" width="16" height="4" rx="1" fill="currentColor"/>
+              </svg>
             </button>
           </div>
+
           <div class="sort-dropdown">
             <select [(ngModel)]="sortBy" (change)="onFilterChange()">
               <option value="recommended">Recommended</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
+              <option value="price-asc">Price: Low → High</option>
+              <option value="price-desc">Price: High → Low</option>
             </select>
           </div>
         </div>
       </div>
 
+  
       <div class="book-container" [ngClass]="viewMode" *ngIf="isLoading">
-        <div class="skeleton-card glass-panel" *ngFor="let s of skeletonArray">
+        <div class="skeleton-card" *ngFor="let s of skeletonArray">
           <div class="skeleton-img pulse"></div>
-          <div
-            class="skeleton-text pulse"
-            style="width: 80%; margin-top: 20px"
-          ></div>
-          <div class="skeleton-text pulse" style="width: 50%"></div>
-          <div class="skeleton-btn pulse"></div>
         </div>
       </div>
 
       <div class="book-container" [ngClass]="viewMode" *ngIf="!isLoading">
-        <div class="premium-book-card" *ngFor="let book of filteredBooks">
-          <div class="book-stage" (click)="openQuickView(book)">
-            <div class="book-3d">
-              <img [src]="book.imgURL" [alt]="book.title" />
+        <div
+          class="gallery-item"
+          *ngFor="let book of filteredBooks; let i = index"
+          [class.tall]="i % 4 === 0"
+          [class.wide]="i % 5 === 3"
+          (click)="openQuickView(book)"
+        >
+          <div class="gallery-image" [style.backgroundImage]="'url(' + book.imgURL + ')'"></div>
+          <div class="gallery-overlay"></div>
+
+          <div class="gallery-content">
+            <div class="gallery-top">
+              <span class="gallery-badge" *ngIf="book.quantity < 5 && book.quantity > 0">low stock</span>
+              <span class="gallery-badge out" *ngIf="book.quantity === 0">unavailable</span>
             </div>
-            <div class="quick-view-hint">Quick View</div>
-          </div>
 
-          <div class="book-details glass-panel">
-            <div class="badge-row">
-              <span class="status-badge" *ngIf="book.quantity < 5"
-                >LOW STOCK</span
-              >
-              <span class="rating">★ 4.8</span>
-            </div>
-            <h3>{{ book.title }}</h3>
-            <p class="author">By {{ book.author }}</p>
-            <span class="cat-tag" *ngIf="viewMode === 'list'">{{
-              getCategoryName(book.categoryId)
-            }}</span>
-            <p class="list-desc" *ngIf="viewMode === 'list'">
-              {{ (book.description || '') | truncate:150 }}
-            </p>
-
-            <div class="action-row">
-              <div class="price">${{ book.price }}</div>
-
-              <div class="button-group" style="display: flex; gap: 8px">
+            <div class="gallery-bottom">
+              <h3 class="gallery-title">{{ book.title }}</h3>
+              <p class="gallery-author">{{ book.author }}</p>
+              <div class="gallery-meta">
+                <span class="gallery-price">${{ book.price }}</span>
+                <span class="gallery-rating">★ {{ book.price }}</span>
+              </div>
+              <div class="gallery-actions">
                 <button
-                  class="cart-btn"
+                  class="btn-details"
                   [routerLink]="['/book', getBookId(book)]"
-                  style="background: rgba(255, 255, 255, 0.1); color: white"
+                  (click)="$event.stopPropagation()"
                 >
-                  Details
+                  Explore
                 </button>
-
                 <button
-                  class="cart-btn"
+                  class="btn-cart"
                   [disabled]="book.quantity === 0"
-                  (click)="addToCart(book)"
+                  (click)="$event.stopPropagation(); addToCart(book)"
                 >
-                  {{ book.quantity > 0 ? "Add" : "Out" }}
+                  {{ book.quantity > 0 ? 'Add to cart' : 'Sold out' }}
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        <div *ngIf="filteredBooks.length === 0" class="empty-state">
+          <div class="empty-icon">◌</div>
+          <h2>No results found</h2>
+          <p>Try adjusting your filters or search terms</p>
+          <button class="reset-btn" (click)="searchQuery=''; selectedCategory='All'; maxPrice=150; inStockOnly=false; onFilterChange()">
+            Reset filters
+          </button>
+        </div>
       </div>
 
-      <div
-        class="pagination-controls glass-panel"
-        *ngIf="totalPages > 1"
-        style="
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 16px;
-          margin-top: 30px;
-          padding: 15px;
-        "
-      >
+      <div class="pagination-controls" >
         <button
+          class="page-btn"
           (click)="prevPage()"
           [disabled]="currentPage === 0"
-          class="cart-btn"
-          style="padding: 8px 16px"
         >
-          Previous
+          ← Prev
         </button>
-        <span style="font-weight: 600"
-          >Page {{ currentPage + 1 }} of {{ totalPages }}</span
-        >
+        <span class="page-info">
+          {{ currentPage + 1 }} <span class="page-total">of {{ totalPages || 1 }}</span>
+        </span>
         <button
+          class="page-btn"
           (click)="nextPage()"
-          [disabled]="currentPage >= totalPages - 1"
-          class="cart-btn"
-          style="padding: 8px 16px"
+          [disabled]="!hasMoreBooks"
         >
-          Next
+          Next →
         </button>
       </div>
+
     </main>
   </div>
 </div>

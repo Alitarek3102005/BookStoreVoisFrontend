@@ -9,7 +9,7 @@ export class BookService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/books`;
 
-  searchBooks(title?: string, author?: string, categoryId?: string, page: number = 0, size: number = 8, sort?: string): Observable<Book[]> {
+  searchBooks(title?: string, author?: string, categoryId?: string, active?: boolean, page: number = 0, size: number = 8, sort?: string): Observable<Book[]> {
     let params = new HttpParams()
       .set('page', page)
       .set('size', size);
@@ -17,16 +17,18 @@ export class BookService {
     if (title) params = params.set('title', title);
     if (author) params = params.set('author', author);
     if (categoryId) params = params.set('categoryId', categoryId);
+    if (active !== undefined) params = params.set('active', active);
     if (sort) params = params.set('sort', sort);
 
     return this.http.get<Book[]>(this.apiUrl, { params });
   }
 
-  getAllBooks(filters?: { title?: string; author?: string; categoryId?: string; page?: number; size?: number; sort?: string }): Observable<Book[]> {
+  getAllBooks(filters?: { title?: string; author?: string; categoryId?: string; active?: boolean; page?: number; size?: number; sort?: string }): Observable<Book[]> {
     let params = new HttpParams();
     if (filters?.title) params = params.set('title', filters.title);
     if (filters?.author) params = params.set('author', filters.author);
     if (filters?.categoryId) params = params.set('categoryId', filters.categoryId);
+    if (filters?.active !== undefined) params = params.set('active', filters.active);
     if (filters?.page !== undefined) params = params.set('page', filters.page.toString());
     if (filters?.size !== undefined) params = params.set('size', filters.size.toString());
     if (filters?.sort) params = params.set('sort', filters.sort);

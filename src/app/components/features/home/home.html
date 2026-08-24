@@ -1,44 +1,77 @@
 <div class="master-layout">
 
-  <section class="hero-module">
+  <!-- ============ HERO ============ -->
+  <section id="hero" class="hero-module color-section" data-bg="#050507" data-text="#F1F0F6">
     <div class="video-bg-container">
       <video #heroVideo autoplay loop muted playsinline class="hero-video">
         <source src="assets/videos/17489505-hd_1920_1080_50fps.mp4" type="video/mp4">
       </video>
       <div class="video-overlay"></div>
     </div>
-    
+
     <div class="hero-content">
       <div class="pill-badge animate-on-scroll reveal-down">v2.0 Architecture Released</div>
-      <h1 class="hero-title animate-on-scroll reveal-up stagger-1">
-        The Ultimate <br><span class="gradient-text">Engineering Library</span>
-      </h1>
+
+      <div class="overflow-hidden">
+        <h1 class="hero-title animate-on-scroll blur-reveal">Architect</h1>
+      </div>
+      <div class="overflow-hidden">
+        <h1 class="hero-title hero-title-italic animate-on-scroll blur-reveal stagger-1">the Stack</h1>
+      </div>
+
       <p class="hero-desc animate-on-scroll reveal-up stagger-2">
         Curated books, interactive WebGL labs, and masterclasses designed for full-stack developers building high-performance systems.
       </p>
       <div class="hero-buttons animate-on-scroll reveal-up stagger-3">
         <button class="btn btn-glow" routerLink="/catalog">Browse Catalog</button>
-        <button class="btn btn-outline">Enter Visual Labs</button>
+        <button class="btn btn-outline" (click)="scrollToSection('labs')">Enter Visual Labs</button>
       </div>
     </div>
   </section>
 
-  <section class="stats-module">
-    <div class="stat-item animate-on-scroll reveal-scale" *ngFor="let stat of stats; let i = index" [style.transition-delay]="i * 0.1 + 's'">
-      <span class="stat-val">{{ stat.value }}</span>
-      <span class="stat-label">{{ stat.label }}</span>
+  <!-- ============ KINETIC MARQUEE ============ -->
+  <section class="marquee-container color-section" data-bg="#1B1640" data-text="#F1F0F6">
+    <div class="marquee-track">
+      <span>COMPILE. SHIP. REPEAT. &nbsp;&mdash;&nbsp; ZERO&#8209;DOWNTIME ARCHITECTURE &nbsp;&mdash;&nbsp; READ. BUILD. DEPLOY. &nbsp;&mdash;&nbsp; </span>
+      <span>COMPILE. SHIP. REPEAT. &nbsp;&mdash;&nbsp; ZERO&#8209;DOWNTIME ARCHITECTURE &nbsp;&mdash;&nbsp; READ. BUILD. DEPLOY. &nbsp;&mdash;&nbsp; </span>
+      <span>COMPILE. SHIP. REPEAT. &nbsp;&mdash;&nbsp; ZERO&#8209;DOWNTIME ARCHITECTURE &nbsp;&mdash;&nbsp; READ. BUILD. DEPLOY. &nbsp;&mdash;&nbsp; </span>
     </div>
   </section>
 
-  <section class="section-module labs-module" *ngIf="labs.length > 0">
-    <div class="section-header animate-on-scroll reveal-up">
+  <!-- ============ EDITORIAL: THE DISCIPLINE ============ -->
+  <section class="editorial-section color-section" data-bg="#0A0A14" data-text="#E7E5F0">
+    <div class="container">
+      <div class="editorial-layout">
+        <div class="ed-text">
+          <h2 class="ed-heading animate-on-scroll blur-reveal">The Discipline<br><span class="ed-heading-italic">of Good Code</span></h2>
+          <div class="ed-body animate-on-scroll blur-reveal stagger-1">
+            <p class="drop-cap">Behind every resilient system is a shelf of dog-eared references and a mind that never stopped studying. Engineering is not improvisation &mdash; it is pattern, precedent, and a discipline earned one edge case at a time.</p>
+            <p>This library exists for that discipline. Every title is chosen for developers who ship to production, who debug at 2am, and who still believe the fundamentals are worth mastering. No filler. No fluff. Just the stack, done right.</p>
+          </div>
+        </div>
+        <div class="ed-visuals">
+          <div class="img-frame frame-1 hover-scale animate-on-scroll blur-reveal">
+            <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1000&q=80" alt="Server infrastructure">
+          </div>
+          <div class="img-frame frame-2 hover-scale offset-down animate-on-scroll blur-reveal stagger-1">
+            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1000&q=80" alt="Code on screen">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INTERACTIVE LABS ============ -->
+  <section id="labs" class="section-module labs-module color-section" data-bg="#050507" data-text="#F1F0F6" *ngIf="labs.length > 0">
+    <div class="section-header animate-on-scroll blur-reveal">
+      <span class="eyebrow">Hands-On</span>
       <h2>Interactive Learning <span class="gradient-text">Labs</span></h2>
       <p>Master complex algorithms and rendering techniques through interactive browser simulations.</p>
     </div>
-    
+
     <div class="grid-layout two-col">
-      <div class="lab-card animate-on-scroll" 
-           [ngClass]="i % 2 === 0 ? 'reveal-left' : 'reveal-right'" 
+      <div class="lab-card animate-on-scroll"
+           [ngClass]="i % 2 === 0 ? 'reveal-left' : 'reveal-right'"
            *ngFor="let lab of labs; let i = index">
         <img [src]="lab.imgURL" [alt]="lab.title" class="lab-bg">
         <div class="lab-overlay">
@@ -50,25 +83,27 @@
             <h3>{{ lab.title }}</h3>
             <p>{{ lab.subtitle }}</p>
           </div>
-          <button class="btn-icon">Launch Lab ➔</button>
+          <button class="btn-icon">Launch Lab &#10142;</button>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section-module videos-module" *ngIf="videos.length > 0">
-    <div class="section-header animate-on-scroll reveal-up">
+  <!-- ============ MASTERCLASSES ============ -->
+  <section class="section-module videos-module color-section" data-bg="#0A0A14" data-text="#E7E5F0" *ngIf="videos.length > 0">
+    <div class="section-header animate-on-scroll blur-reveal">
+      <span class="eyebrow">Watch &amp; Learn</span>
       <h2>Tech <span class="gradient-text">Masterclasses</span></h2>
       <p>Deep dives into Spring Security, .NET dependency injection, and modern frontend architecture.</p>
     </div>
-    
-    <div class="grid-layout">
-      <div class="video-card glass-panel animate-on-scroll reveal-scale" 
-           *ngFor="let video of videos; let i = index" 
-           [style.transition-delay]="i * 0.15 + 's'">
+
+    <div class="grid-layout three-col">
+      <div class="video-card glass-panel animate-on-scroll blur-reveal"
+           *ngFor="let video of videos; let i = index"
+           [style.transition-delay]="i * 0.1 + 's'">
         <div class="thumbnail">
           <img [src]="video.imgURL" alt="Thumbnail">
-          <div class="play-btn">▶</div>
+          <div class="play-btn">&#9658;</div>
           <span class="duration-badge">{{ video.duration }}</span>
         </div>
         <div class="video-info">
@@ -80,67 +115,99 @@
     </div>
   </section>
 
-  <!-- Books Library Section with Connected Search & Pagination -->
-  <section class="section-module library-module">
-    <div class="section-header animate-on-scroll reveal-up">
-      <h2>The Core <span class="gradient-text">Library</span></h2>
-      
-      <div class="library-controls" style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 25px;">
-        
-        <!-- Search Input -->
-        <div class="search-wrapper" style="display: flex; gap: 10px; width: 100%; max-width: 500px;">
-          <input type="text" 
-                 placeholder="Search books by title..." 
-                 [(ngModel)]="searchQuery" 
-                 (keyup.enter)="onSearch()"
-                 style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.4); color: white; outline: none; font-size: 1rem;">
-          <button class="btn btn-glow" (click)="onSearch()" style="padding: 10px 24px;">Search</button>
+  <!-- ============ THE INDEX (live stats HUD) ============ -->
+  <section class="portal-section color-section" data-bg="#040406" data-text="#FFFFFF">
+    <div class="portal-wrapper">
+      <div class="portal-text-layer animate-on-scroll blur-reveal">
+        <span class="eyebrow eyebrow-light">Live Telemetry</span>
+        <h2 class="portal-title">The Index</h2>
+      </div>
+
+      <div class="portal-window animate-on-scroll reveal-scale">
+        <div class="circuit-canvas"></div>
+
+        <div class="hud-radar">
+          <div class="radar-sweep"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-blip"></div>
         </div>
 
-        <!-- Stack / Category Filters -->
-        <div class="stack-filters">
-          <button *ngFor="let stack of stacks" class="filter-btn" [class.active]="activeStack === stack" (click)="filterByStack(stack)">
-            {{ stack }}
-          </button>
+        <div class="hud-stats">
+          <div class="hud-stat" *ngFor="let stat of stats">
+            <span class="hud-stat-value">{{ stat.value }}</span>
+            <span class="hud-stat-label">{{ stat.label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CORE LIBRARY ============ -->
+  <section id="library" class="section-module library-module color-section" data-bg="#050507" data-text="#F1F0F6">
+    <div class="section-header animate-on-scroll blur-reveal">
+      <span class="eyebrow">The Catalog</span>
+      <h2>The Core <span class="gradient-text">Library</span></h2>
+
+      <div class="library-controls">
+
+        <!-- Stacks — expanding category cards -->
+        <div class="stack-cards">
+          <div class="stack-card"
+               *ngFor="let stack of stacks"
+               [class.active]="isStackActive(stack)"
+               (mouseenter)="onStackHover(stack)"
+               (mouseleave)="onStackHover(null)"
+               (click)="filterByStack(stack)">
+            <span class="stack-card-name">{{ stack }}</span>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-wrapper">
+          <input type="text"
+                 placeholder="Search books by title..."
+                 [(ngModel)]="searchQuery"
+                 (keyup.enter)="onSearch()">
+          <button class="btn btn-glow" (click)="onSearch()">Search</button>
         </div>
       </div>
     </div>
 
     <!-- Loading Spinner -->
-    <div class="loading-state text-center" *ngIf="isLoadingBooks" style="padding: 40px 0;">
-      <div class="spinner" style="margin: 0 auto;"></div>
+    <div class="loading-state text-center" *ngIf="isLoadingBooks">
+      <div class="spinner"></div>
     </div>
 
     <!-- Book Grid -->
-    <div class="grid-layout three-col" *ngIf="!isLoadingBooks && books.length > 0">
-      <div class="premium-book-card animate-on-scroll reveal-up" 
-           *ngFor="let book of books; let i = index" 
-           [style.transition-delay]="i * 0.1 + 's'">
-        
-        <div class="book-stage floating-item" [style.animation-delay]="i * 0.5 + 's'" [routerLink]="['/book', book.id]" style="cursor: pointer;">
+    <div class="grid-layout three-col book-grid" *ngIf="!isLoadingBooks && books.length > 0">
+      <div class="premium-book-card animate-on-scroll reveal-up"
+           *ngFor="let book of books; let i = index"
+           [style.transition-delay]="i * 0.08 + 's'">
+
+        <div class="book-stage floating-item" [style.animation-delay]="i * 0.5 + 's'" [routerLink]="['/book', book.id]">
           <div class="book-3d">
             <img [src]="book.imgURL" [alt]="book.title">
           </div>
         </div>
-        
+
         <div class="book-details glass-panel">
           <div class="badge-row">
             <span class="status-badge" *ngIf="book.badge">{{ book.badge }}</span>
-            <span class="stock-status" *ngIf="book.quantity === 0" style="color: #ff4d4d; font-size: 0.8rem; font-weight: bold;">OUT OF STOCK</span>
-            <span class="rating">★ {{ book.rating }}</span>
+            <span class="stock-status" *ngIf="book.quantity === 0">OUT OF STOCK</span>
+            <span class="rating">&#9733; {{ book.rating }}</span>
           </div>
-          <h3 [routerLink]="['/book', book.id]" style="cursor: pointer; transition: color 0.3s;" onmouseover="this.style.color='#00e5ff'" onmouseout="this.style.color='white'">{{ book.title }}</h3>
+          <h3 [routerLink]="['/book', book.id]">{{ book.title }}</h3>
           <p class="author">{{ book.author }}</p>
-          
+
           <div class="format-toggles">
             <button *ngFor="let format of book.formats" [class.active]="book.selectedFormat === format.type" (click)="selectFormat(book, format.type, $event)">
               {{ format.type }}
             </button>
           </div>
-          
+
           <div class="action-row">
             <div class="price">${{ (book.formats[0].type === book.selectedFormat ? book.formats[0].price : (book.formats[1]?.price || book.formats[0].price)) | number:'1.2-2' }}</div>
-            <button class="cart-btn btn-glow" [disabled]="book.quantity === 0" (click)="addToCart(book)" style="padding: 8px 16px; border-radius: 6px;">
+            <button class="cart-btn btn-glow" [disabled]="book.quantity === 0" (click)="addToCart(book)">
               {{ book.quantity > 0 ? '+ Cart' : 'Unavailable' }}
             </button>
           </div>
@@ -149,26 +216,36 @@
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!isLoadingBooks && books.length === 0" class="text-center" style="padding: 40px 0; color: #aaa;">
+    <div *ngIf="!isLoadingBooks && books.length === 0" class="text-center empty-state">
       <p>No books found matching your search or category.</p>
     </div>
 
     <!-- Pagination Controls -->
-    <div class="pagination-controls glass-panel animate-on-scroll reveal-up" *ngIf="!isLoadingBooks && (currentPage > 0 || hasMoreBooks)" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 40px; padding: 15px; border-radius: 12px; width: fit-content; margin-left: auto; margin-right: auto;">
-      <button class="btn btn-outline" (click)="prevPage()" [disabled]="currentPage === 0" style="min-width: 100px;">← Prev</button>
-      <span style="font-weight: bold; color: rgba(255,255,255,0.8);">Page {{ currentPage + 1 }}</span>
-      <button class="btn btn-outline" (click)="nextPage()" [disabled]="!hasMoreBooks" style="min-width: 100px;">Next →</button>
+    <div class="pagination-controls glass-panel animate-on-scroll reveal-up" *ngIf="!isLoadingBooks && (currentPage > 0 || hasMoreBooks)">
+      <button class="btn btn-outline" (click)="prevPage()" [disabled]="currentPage === 0">&larr; Prev</button>
+      <span class="page-indicator">Page {{ currentPage + 1 }}</span>
+      <button class="btn btn-outline" (click)="nextPage()" [disabled]="!hasMoreBooks">Next &rarr;</button>
     </div>
 
   </section>
 
-  <footer class="footer-cta animate-on-scroll reveal-up">
-    <div class="glass-panel text-center">
-      <h2>Ready to upgrade your stack?</h2>
-      <p>Join thousands of developers mastering modern software engineering.</p>
-      <div class="email-capture">
-        <input type="email" placeholder="Enter your email address...">
-        <button class="btn btn-glow">Subscribe</button>
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer-module color-section" data-bg="#050507" data-text="#E7E5F0">
+    <div class="footer-cta animate-on-scroll blur-reveal">
+      <div class="glass-panel text-center">
+        <h2>Ready to upgrade your stack?</h2>
+        <p>Join thousands of developers mastering modern software engineering.</p>
+        <div class="email-capture">
+          <input type="email" placeholder="Enter your email address...">
+          <button class="btn btn-glow">Subscribe</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-wordmark-row animate-on-scroll blur-reveal">
+      <h1 class="footer-huge">THE STACK</h1>
+      <div class="footer-bar">
+        <p>&copy; 2026 The Stack Library.</p>
       </div>
     </div>
   </footer>

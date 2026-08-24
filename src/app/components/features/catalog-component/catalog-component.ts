@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { BookService } from '../../../services/book-service';
 import { CategoryService } from '../../../services/category-service';
 import { Book } from '../../../models/book';
-import { RouterLink } from '@angular/router';
-import Keycloak from 'keycloak-js'; // <-- Import Keycloak
+import { RouterLink, ActivatedRoute } from '@angular/router'; 
+import Keycloak from 'keycloak-js'; 
 import { CartService } from '../../../services/cart-service';
 import { OrderStatusPipe } from '../../../pipes/order-status-pipe';
 import { TruncatePipe } from '../../../pipes/truncate-pipe';
@@ -24,6 +24,7 @@ export class CatalogComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private cartService = inject(CartService);
   private keycloak = inject(Keycloak);
+  private route = inject(ActivatedRoute); 
 
   isLoading: boolean = true;
   viewMode: 'grid' | 'list' = 'grid';
@@ -42,20 +43,38 @@ export class CatalogComponent implements OnInit {
   sortBy: string = 'recommended';
 
   currentPage: number = 0;
-  pageSize: number = 8;
+  pageSize: number = 10;
   totalPages: number = 0;
   totalElements: number = 0;
+  hasMoreBooks: boolean = true;
 
   skeletonArray = Array(6).fill(0);
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) {
+        this.searchQuery = params['search'];
+        this.currentPage = 0;
+        
+        if (this.categories.length > 0) {
+          this.fetchBooks();
+        }
+      } else if (this.searchQuery) {
+        this.searchQuery = '';
+        this.currentPage = 0;
+        if (this.categories.length > 0) {
+          this.fetchBooks();
+        }
+      }
+    });
+
     this.loadCatalogData();
   }
 
   loadCatalogData(): void {
     this.isLoading = true;
 
-    this.categoryService.getAllCategories().subscribe({
+    this.categoryService.getAllCategories({ active: true }).subscribe({
       next: (backendCategories: any[]) => {
         backendCategories.forEach(cat => {
           const catId = cat.id || cat.categoryId;
@@ -78,27 +97,32 @@ export class CatalogComponent implements OnInit {
     this.isLoading = true;
     const catId = this.selectedCategory !== 'All' ? this.categoryIdMap[this.selectedCategory] : undefined;
 
+    let backendSort: string | undefined;
+    if (this.sortBy === 'price-asc') backendSort = 'price,asc';
+    if (this.sortBy === 'price-desc') backendSort = 'price,desc';
+
     this.bookService.searchBooks(
       this.searchQuery || undefined,
       undefined,
       catId,
+      true, 
       this.currentPage,
-      this.pageSize
+      this.pageSize,
+      backendSort
     ).subscribe({
       next: (books: Book[]) => {
-
+        
         let results = books.filter(book => {
           const matchPrice = book.price <= this.maxPrice;
           const matchStock = this.inStockOnly ? book.quantity > 0 : true;
           return matchPrice && matchStock;
         });
 
-        if (this.sortBy === 'price-asc') results.sort((a, b) => a.price - b.price);
-        if (this.sortBy === 'price-desc') results.sort((a, b) => b.price - a.price);
-
         this.filteredBooks = results;
+        
         this.totalElements = books.length;
-        this.totalPages = Math.ceil(books.length / this.pageSize) || 1;
+        this.hasMoreBooks = books.length === this.pageSize; 
+        
         this.isLoading = false;
       },
       error: (err) => {
@@ -114,7 +138,7 @@ export class CatalogComponent implements OnInit {
   }
 
   nextPage(): void {
-    if (this.currentPage < this.totalPages - 1) {
+    if (this.hasMoreBooks) {
       this.currentPage++;
       this.fetchBooks();
     }

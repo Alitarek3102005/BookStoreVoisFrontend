@@ -25,7 +25,7 @@
 
       <div class="purchase-col glass-panel">
         <div class="badge-row">
-          <span class="status-badge" *ngIf="book.quantity < 5">LOW STOCK</span>
+          <span class="status-badge" *ngIf="book.quantity < 5 && book.quantity > 0">LOW STOCK</span>
           <span class="stock-status" [class.out]="book.quantity === 0">
             {{ book.quantity > 0 ? '✓ In Stock (' + book.quantity + ' available)' : '✗ Out of Stock' }}
           </span>
@@ -85,40 +85,88 @@
         <div *ngIf="activeTab === 'reviews'" class="reviews-tab">
           
           <!-- Submit Review Form -->
-          <div class="review-form-container glass-panel" style="margin-bottom: 25px; padding: 20px; border-radius: 12px;">
-            <h4 style="margin-bottom: 15px;">Leave a Review</h4>
-            <div class="form-group" style="margin-bottom: 12px;">
-              <label style="display: block; margin-bottom: 5px;">Rating:</label>
-              <select [(ngModel)]="newRating" class="form-control" style="padding: 8px; width: 100%; border-radius: 6px;">
-                <option [value]="5">★★★★★ (5)</option>
-                <option [value]="4">★★★★☆ (4)</option>
-                <option [value]="3">★★★☆☆ (3)</option>
-                <option [value]="2">★★☆☆☆ (2)</option>
-                <option [value]="1">★☆☆☆☆ (1)</option>
-              </select>
+          <div class="review-form-container glass-panel" style="margin-bottom: 30px; padding: 25px; border-radius: 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);" *ngIf="currentUserId">
+            <h3 style="margin-bottom: 20px; font-size: 1.2rem; color: #fff;">Leave a Review</h3>
+            
+            <div class="form-row" style="display: flex; gap: 15px; align-items: flex-start; margin-bottom: 15px;">
+              <div class="form-group" style="flex: 0 0 150px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #aaa;">Rating</label>
+                <select [(ngModel)]="newRating" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); outline: none;">
+                  <option [value]="5">★★★★★ (5)</option>
+                  <option [value]="4">★★★★☆ (4)</option>
+                  <option [value]="3">★★★☆☆ (3)</option>
+                  <option [value]="2">★★☆☆☆ (2)</option>
+                  <option [value]="1">★☆☆☆☆ (1)</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #aaa;">Your Thoughts</label>
+                <textarea [(ngModel)]="newComment" placeholder="What did you think of this book?" class="form-control" rows="3" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); outline: none; resize: vertical;"></textarea>
+              </div>
             </div>
-            <div class="form-group" style="margin-bottom: 12px;">
-              <textarea [(ngModel)]="newComment" placeholder="Write your thoughts about this book..." class="form-control" rows="3" style="width: 100%; padding: 10px; border-radius: 6px;"></textarea>
+            
+            <div style="display: flex; justify-content: flex-end;">
+              <button class="btn-glow" (click)="submitReview()" [disabled]="!newComment.trim()" style="padding: 10px 24px; border-radius: 8px;">Publish Review</button>
             </div>
-            <button class="btn-glow" (click)="submitReview()" style="padding: 10px 20px; cursor: pointer;">Submit Review</button>
+          </div>
+
+          <div *ngIf="!currentUserId" class="review-form-container glass-panel text-center" style="margin-bottom: 30px; padding: 25px; border-radius: 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
+            <p style="color: #aaa; margin: 0;">Please log in to share your thoughts on this book.</p>
           </div>
 
           <!-- Reviews List -->
-          <div *ngIf="reviews.length === 0" class="no-reviews" style="text-align: center; padding: 20px; opacity: 0.7;">
+          <div *ngIf="reviews.length === 0" class="no-reviews" style="text-align: center; padding: 30px; opacity: 0.6;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; margin-bottom: 10px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             <p>No reviews yet. Be the first to review this book!</p>
           </div>
 
-          <div class="review-item" *ngFor="let rev of reviews" style="margin-bottom: 15px; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); border-radius: 8px;">
-            <div class="review-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <strong>{{ rev.username || 'Book Reader' }}</strong> 
-              <span class="stars" style="color: #f39c12;">
-                <ng-container *ngFor="let s of [1,2,3,4,5]">
-                  {{ s <= rev.rating ? '★' : '☆' }}
-                </ng-container>
-              </span>
-              <span class="review-date" style="font-size: 0.8rem; opacity: 0.6;">{{ rev.createdAt | date:'mediumDate' }}</span>
-            </div>
-            <p style="margin: 0;">{{ rev.comment }}</p>
+          <div class="review-item" *ngFor="let rev of reviews" style="margin-bottom: 20px; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); border-radius: 10px;">
+            
+            <!-- Read-Only View -->
+            <ng-container *ngIf="editingReviewId !== rev.reviewId">
+              <div class="review-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                
+                <div class="reviewer-info">
+                  <strong style="font-size: 1.1rem; color: #fff; display: block; margin-bottom: 4px;">{{ rev.username || 'Book Reader' }}</strong> 
+                  <span class="stars" style="color: #00e5ff; letter-spacing: 2px;">
+                    <ng-container *ngFor="let s of [1,2,3,4,5]">{{ s <= rev.rating ? '★' : '☆' }}</ng-container>
+                  </span>
+                  <span class="review-date" style="font-size: 0.85rem; color: #888; margin-left: 10px;">{{ rev.createdAt | date:'mediumDate' }}</span>
+                </div>
+
+                <!-- Actions Dropdown / Buttons for Current User -->
+                <div class="review-actions" *ngIf="rev.userId === currentUserId" style="display: flex; gap: 10px;">
+                  <button (click)="startEditReview(rev)" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.9rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">Edit</button>
+                  <button (click)="deleteReview(rev.reviewId)" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 0.9rem; transition: color 0.2s;" onmouseover="this.style.color='#ff1a1a'" onmouseout="this.style.color='#ff4d4d'">Delete</button>
+                </div>
+              </div>
+              
+              <p style="margin: 0; color: rgba(255,255,255,0.85); line-height: 1.6;">{{ rev.comment }}</p>
+            </ng-container>
+
+            <!-- Edit Mode View -->
+            <ng-container *ngIf="editingReviewId === rev.reviewId">
+              <div class="edit-review-form" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; gap: 15px;">
+                  <select [(ngModel)]="editRating" class="form-control" style="width: 150px; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <option [value]="5">★★★★★ (5)</option>
+                    <option [value]="4">★★★★☆ (4)</option>
+                    <option [value]="3">★★★☆☆ (3)</option>
+                    <option [value]="2">★★☆☆☆ (2)</option>
+                    <option [value]="1">★☆☆☆☆ (1)</option>
+                  </select>
+                </div>
+                
+                <textarea [(ngModel)]="editComment" class="form-control" rows="3" style="width: 100%; padding: 12px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); resize: vertical;"></textarea>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px;">
+                  <button (click)="cancelEditReview()" style="padding: 8px 16px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 6px; cursor: pointer;">Cancel</button>
+                  <button class="btn-glow" (click)="saveEditedReview(rev.reviewId)" [disabled]="!editComment.trim()" style="padding: 8px 20px; border-radius: 6px;">Save Changes</button>
+                </div>
+              </div>
+            </ng-container>
+
           </div>
 
         </div>

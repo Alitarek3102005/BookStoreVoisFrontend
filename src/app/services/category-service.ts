@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Category } from '../models/category';
@@ -10,8 +10,15 @@ export class CategoryService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/categories`;
 
-  getAllCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(this.apiUrl);
+  getAllCategories(filters?: { keyword?: string; active?: boolean; page?: number; size?: number; sort?: string }): Observable<Category[]> {
+    let params = new HttpParams();
+    if (filters?.keyword) params = params.set('keyword', filters.keyword);
+    if (filters?.active !== undefined) params = params.set('active', filters.active);
+    if (filters?.page !== undefined) params = params.set('page', filters.page.toString());
+    if (filters?.size !== undefined) params = params.set('size', filters.size.toString());
+    if (filters?.sort) params = params.set('sort', filters.sort);
+
+    return this.http.get<Category[]>(this.apiUrl, { params });
   }
 
   getCategoryById(categoryId: string): Observable<Category> {

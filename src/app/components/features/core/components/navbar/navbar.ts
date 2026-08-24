@@ -1,6 +1,6 @@
 import { Component, HostListener, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router'; // <-- Added Router
 import { FormsModule } from '@angular/forms';
 import Keycloak from 'keycloak-js';
 import { CartService } from '../../../../../services/cart-service';
@@ -17,6 +17,7 @@ export class Navbar implements OnInit {
   private keycloak = inject(Keycloak);
   private cartService = inject(CartService);
   private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router); // <-- Inject Router
 
   isScrolled = false;
   isMobileMenuOpen = false;
@@ -111,7 +112,9 @@ export class Navbar implements OnInit {
 
   onSearch() {
     if (this.searchQuery.trim()) {
-      console.log('Searching for:', this.searchQuery);
+      // Navigate to the catalog page and pass the search query as a URL parameter
+      this.router.navigate(['/catalog'], { queryParams: { search: this.searchQuery.trim() } });
+      this.searchQuery = ''; // Clear the input field after searching
     }
   }
 

@@ -12,9 +12,9 @@ import { LabService } from '../../../services/lab-service';
 interface ContentItem { id: string; title: string; subtitle: string; imgURL: string; }
 interface Video extends ContentItem { duration: string; tag: string; }
 interface Lab extends ContentItem { tech: string; difficulty: string; }
-interface AdvancedBook extends ContentItem { 
-  author: string; basePrice: number; quantity: number; 
-  rating: number; formats: { type: string; price: number }[]; 
+interface AdvancedBook extends ContentItem {
+  author: string; basePrice: number; quantity: number;
+  rating: number; formats: { type: string; price: number }[];
   selectedFormat?: string; badge?: string;
 }
 
@@ -36,21 +36,28 @@ export class Home implements OnInit, AfterViewInit {
   private keycloak = inject(Keycloak);
   private cdr = inject(ChangeDetectorRef);
 
-  private observer!: IntersectionObserver;
+  // Reveal-on-scroll observer (blur/slide-up reveals)
+  private revealObserver!: IntersectionObserver;
+  // Fires when a .color-section crosses the middle of the viewport,
+  // used to morph the shared background/text color like an editorial spread
+  private colorObserver!: IntersectionObserver;
 
   stats: { label: string; value: string }[] = [];
-  
+
   rawCategories: any[] = [];
   stacks: string[] = ['All'];
   activeStack = 'All';
-  
+  // Hover-preview for the expanding "stack" cards — separate from the
+  // committed activeStack so hovering doesn't refetch data, only clicking does
+  previewStack: string | null = null;
+
   books: AdvancedBook[] = [];
   videos: Video[] = [];
   labs: Lab[] = [];
 
   searchQuery: string = '';
   currentPage: number = 0;
-  pageSize: number = 6; 
+  pageSize: number = 6;
   hasMoreBooks: boolean = true;
   isLoadingBooks: boolean = false;
 
@@ -63,11 +70,12 @@ export class Home implements OnInit, AfterViewInit {
   }
 
   loadCategories(): void {
-    this.categoryService.getAllCategories().subscribe(categories => {
+    // FIX: Only load active categories to prevent showing empty stacks for soft-deleted categories
+    this.categoryService.getAllCategories({ active: true }).subscribe(categories => {
       this.rawCategories = categories;
       this.stacks = ['All', ...categories.map(c => c.name)];
-      
-      this.loadBooks(true); 
+
+      this.loadBooks(true);
     });
   }
 
@@ -83,13 +91,15 @@ export class Home implements OnInit, AfterViewInit {
       catId = category?.id || category?.categoryId;
     }
 
+    // FIX: Added 'true' for the active parameter to align with the updated BookService signature
     this.bookService.searchBooks(
-      this.searchQuery || undefined, 
-      undefined, 
-      catId, 
-      this.currentPage, 
-      this.pageSize, 
-      'title,ASC'
+      this.searchQuery || undefined,
+      undefined, // author
+      catId,     // categoryId
+      true,      // active (Hides soft-deleted books from the home page)
+      this.currentPage,
+      this.pageSize,
+      'title,asc'
     ).subscribe({
       next: (backendBooks) => {
         this.books = backendBooks.map(b => ({
@@ -99,10 +109,10 @@ export class Home implements OnInit, AfterViewInit {
           author: b.author,
           basePrice: b.price,
           quantity: b.quantity,
-          rating: 4.8, 
+          rating: 4.8,
           imgURL: b.imgURL || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=400',
           formats: [
-            { type: 'Hardcover', price: b.price }, 
+            { type: 'Hardcover', price: b.price },
             { type: 'E-Book', price: Number((b.price * 0.7).toFixed(2)) }
           ],
           selectedFormat: 'Hardcover',
@@ -111,9 +121,9 @@ export class Home implements OnInit, AfterViewInit {
 
         this.hasMoreBooks = backendBooks.length === this.pageSize;
         this.isLoadingBooks = false;
-        
-        this.calculateDynamicStats(); 
-        this.triggerAnimations();
+
+        this.calculateDynamicStats();
+        this.refreshScrollEffects();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -143,7 +153,17 @@ export class Home implements OnInit, AfterViewInit {
 
   filterByStack(stackName: string): void {
     this.activeStack = stackName;
+    this.previewStack = null;
     this.loadBooks(true);
+  }
+
+  // Hover state for the expanding stack cards — purely visual, doesn't touch data
+  onStackHover(stackName: string | null): void {
+    this.previewStack = stackName;
+  }
+
+  isStackActive(stackName: string): boolean {
+    return (this.previewStack ?? this.activeStack) === stackName;
   }
 
   // Connects to the real CartService using Keycloak Identity
@@ -186,7 +206,7 @@ export class Home implements OnInit, AfterViewInit {
       { label: 'Technical Titles', value: `${totalBooks}+` },
       { label: 'Engineering Stacks', value: `${totalCategories}` },
       { label: 'Books in Stock', value: `${totalStock}` },
-      { label: 'Active Users', value: '12.4K+' } 
+      { label: 'Active Users', value: '12.4K+' }
     ];
   }
 
@@ -194,7 +214,7 @@ export class Home implements OnInit, AfterViewInit {
     this.videoService.getAllVideos().subscribe({
       next: (backendVideos) => {
         this.videos = backendVideos;
-        this.triggerAnimations();
+        this.refreshScrollEffects();
       },
       error: () => { console.warn('Video service not available yet.'); }
     });
@@ -204,10 +224,18 @@ export class Home implements OnInit, AfterViewInit {
     this.labService.getAllLabs().subscribe({
       next: (backendLabs) => {
         this.labs = backendLabs;
-        this.triggerAnimations();
+        this.refreshScrollEffects();
       },
       error: () => { console.warn('Lab service not available yet.'); }
     });
+  }
+
+  // Smooth-scrolls to a section id (used by the hero CTAs)
+  scrollToSection(id: string): void {
+    const target = this.el.nativeElement.querySelector('#' + id);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   ngAfterViewInit(): void {
@@ -218,7 +246,7 @@ export class Home implements OnInit, AfterViewInit {
       });
     }
 
-    this.observer = new IntersectionObserver((entries) => {
+    this.revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('is-visible');
@@ -226,13 +254,30 @@ export class Home implements OnInit, AfterViewInit {
       });
     }, { root: null, rootMargin: '0px 0px -100px 0px', threshold: 0.15 });
 
-    this.triggerAnimations();
+    // Watches each editorial "spread" and morphs the shared background/text
+    // color as it crosses the middle of the viewport — the CSS transition
+    // on .master-layout is what makes the change feel like a fade, not a cut.
+    this.colorObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const bg = entry.target.getAttribute('data-bg');
+          const text = entry.target.getAttribute('data-text');
+          if (bg) this.el.nativeElement.style.setProperty('--dyn-bg', bg);
+          if (text) this.el.nativeElement.style.setProperty('--dyn-text', text);
+        }
+      });
+    }, { root: null, rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+    this.refreshScrollEffects();
   }
 
-  triggerAnimations(): void {
+  refreshScrollEffects(): void {
     setTimeout(() => {
-      const animatedElements = this.el.nativeElement.querySelectorAll('.animate-on-scroll:not(.is-visible)');
-      animatedElements.forEach((el: any) => this.observer.observe(el));
+      const revealTargets = this.el.nativeElement.querySelectorAll('.animate-on-scroll:not(.is-visible)');
+      revealTargets.forEach((el: any) => this.revealObserver.observe(el));
+
+      const colorTargets = this.el.nativeElement.querySelectorAll('.color-section');
+      colorTargets.forEach((el: any) => this.colorObserver.observe(el));
     }, 100);
   }
 }

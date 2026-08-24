@@ -82,6 +82,7 @@
             <th>Author</th>
             <th>Price</th>
             <th>Stock Qty</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -92,7 +93,13 @@
             <td>${{ book.price | number:'1.2-2' }}</td>
             <td>{{ book.quantity }}</td>
             <td>
-              <button class="action-link" style="color: #ff4d4d; background:none; border:none; cursor:pointer;" (click)="deleteBook(book.bookId)">Delete</button>
+              <span class="status-badge" [ngClass]="book.active !== false ? 'badge-success' : 'badge-danger'">
+                {{ book.active !== false ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <button *ngIf="book.active !== false" class="action-link" style="color: #ff4d4d; background:none; border:none; cursor:pointer;" (click)="deleteBook(book.bookId)">Deactivate</button>
+              <button *ngIf="book.active === false" class="action-link" style="color: #4cd137; background:none; border:none; cursor:pointer;" (click)="reactivateBook(book.bookId)">Reactivate</button>
             </td>
           </tr>
         </tbody>
@@ -188,6 +195,7 @@
           <tr>
             <th>Category Name</th>
             <th>Description</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -196,7 +204,13 @@
             <td class="highlight">{{ cat.name }}</td>
             <td>{{ cat.description }}</td>
             <td>
-              <button class="action-link" style="color: #ff4d4d; background:none; border:none; cursor:pointer;" (click)="deleteCategory(cat.categoryId)">Delete</button>
+              <span class="status-badge" [ngClass]="cat.active !== false ? 'badge-success' : 'badge-danger'">
+                {{ cat.active !== false ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <button *ngIf="cat.active !== false" class="action-link" style="color: #ff4d4d; background:none; border:none; cursor:pointer;" (click)="deleteCategory(cat.categoryId)">Deactivate</button>
+              <button *ngIf="cat.active === false" class="action-link" style="color: #4cd137; background:none; border:none; cursor:pointer;" (click)="reactivateCategory(cat.categoryId)">Reactivate</button>
             </td>
           </tr>
         </tbody>
