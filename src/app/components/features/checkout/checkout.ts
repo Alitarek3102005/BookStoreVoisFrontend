@@ -6,6 +6,7 @@ import Keycloak from 'keycloak-js';
 import { OrderRequest } from '../../../models/order-request';
 import { OrderService } from '../../../services/order-service';
 import { CartService } from '../../../services/cart-service';
+import { BookService } from '../../../services/book-service'; // Make sure this path is correct
 import { CartResponse } from '../../../models/cart-response';
 import { CartItemResponse } from '../../../models/cart-item-response';
 
@@ -20,10 +21,14 @@ export class Checkout implements OnInit {
   private router = inject(Router);
   private cartService = inject(CartService);
   private orderService = inject(OrderService);
+  private bookService = inject(BookService); // Injected BookService
   private keycloak = inject(Keycloak);
 
   cart: CartResponse | null = null;
   cartItems: CartItemResponse[] = [];
+  
+  // Dictionary to store fetched images by bookId
+  bookImages: { [bookId: string]: string } = {};
   
   subtotal: number = 0;
   tax: number = 0;
@@ -48,6 +53,7 @@ export class Checkout implements OnInit {
       this.cart = cart;
       this.cartItems = cart?.items || [];
       this.calculateTotals();
+      this.loadBookImages(); // Fetch images when cart updates
     });
 
     // Fetch initial cart state from backend
@@ -60,10 +66,27 @@ export class Checkout implements OnInit {
     });
   }
 
+  // Fetches the book details for each item to get the image URL
+  loadBookImages(): void {
+    this.cartItems.forEach(item => {
+      if (!this.bookImages[item.bookId]) {
+        this.bookService.getBookById(item.bookId).subscribe({
+          next: (book: any) => {
+            // Check your exact backend property name (imgUrl, imgURL, imageUrl)
+            this.bookImages[item.bookId] = book.imgUrl || book.imgURL || book.imageUrl || 'assets/images/placeholder.png';
+          },
+          error: () => {
+            this.bookImages[item.bookId] = 'assets/images/placeholder.png';
+          }
+        });
+      }
+    });
+  }
+
   calculateTotals(): void {
     this.subtotal = this.cartItems.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-    this.tax = this.subtotal * 0.08; 
-    this.total = this.subtotal + this.tax + this.shipping;
+    
+    this.total = this.subtotal;
   }
 
   increaseQuantity(item: CartItemResponse): void {
@@ -100,7 +123,6 @@ export class Checkout implements OnInit {
     this.errorMessage = '';
     this.isLoading = true;
 
-    // Use checkout endpoint or create order mapping backend requirements
     const orderRequest: OrderRequest = {
       userId: this.currentUserId,
       items: this.cartItems.map(item => ({
@@ -113,7 +135,6 @@ export class Checkout implements OnInit {
     this.orderService.createOrder(orderRequest).subscribe({
       next: () => {
         this.isLoading = false;
-        // Clear cart on backend and navigate
         this.cartService.clearCart(this.currentUserId).subscribe(() => {
           this.router.navigate(['/order-history']);
         });

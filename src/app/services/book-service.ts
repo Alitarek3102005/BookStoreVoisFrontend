@@ -44,6 +44,18 @@ export class BookService {
     return this.http.post<Book>(this.apiUrl, book);
   }
 
+  createBookWithImage(bookData: any, imageFile: File | null): Observable<Book> {
+    const formData = new FormData();
+    
+    formData.append('book', new Blob([JSON.stringify(bookData)], { type: 'application/json' }));
+    
+    if (imageFile) {
+      formData.append('image', imageFile, imageFile.name);
+    }
+
+    return this.http.post<Book>(this.apiUrl, formData);
+  }
+
   updateBook(bookId: string, book: Book): Observable<Book> {
     return this.http.put<Book>(`${this.apiUrl}/${bookId}`, book);
   }

@@ -94,15 +94,28 @@
             <div class="order-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px;">
               <button class="action-link" style="background: none; border: none; color: #aaa; cursor: pointer; text-decoration: underline;">Download Invoice</button>
 
-              <button 
-                *ngIf="order.status === 'PENDING'" 
-                class="btn-glow" 
-                (click)="simulatePayment(order.orderId)" 
-                [disabled]="processingOrderId === order.orderId"
-                style="padding: 10px 20px; font-size: 0.9rem;">
-                <span *ngIf="processingOrderId !== order.orderId">Complete Payment</span>
-                <span *ngIf="processingOrderId === order.orderId">Processing Secure Payment...</span>
-              </button>
+              <div class="action-buttons" style="display: flex; gap: 15px;">
+                <!-- CANCEL BUTTON -->
+                <button 
+                  *ngIf="order.status === 'PENDING'" 
+                  class="btn-outline" 
+                  (click)="cancelOrder(order.orderId)" 
+                  [disabled]="processingOrderId === order.orderId"
+                  style="padding: 10px 20px; font-size: 0.9rem; border-color: #ff4757; color: #ff4757;">
+                  Cancel Order
+                </button>
+
+                <!-- UPDATED BUTTON TO TRIGGER STRIPE CHECKOUT -->
+                <button 
+                  *ngIf="order.status === 'PENDING'" 
+                  class="btn-glow" 
+                  (click)="payWithStripe(order.orderId)" 
+                  [disabled]="processingOrderId === order.orderId"
+                  style="padding: 10px 20px; font-size: 0.9rem;">
+                  <span *ngIf="processingOrderId !== order.orderId">Pay with Stripe</span>
+                  <span *ngIf="processingOrderId === order.orderId">Processing...</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -48,31 +48,40 @@
           <h2>Order Summary</h2>
           
           <div class="cart-items-list">
-            <div class="cart-item" *ngFor="let item of cartItems">
-              <!-- If image isn't part of CartItemResponse, fallback or bind if mapped -->
-              <div class="item-details">
-                <h4>{{ item.title }}</h4>
-                <div class="item-quantity-controls" style="display: flex; align-items: center; gap: 6px; margin-top: 6px;">
-                  <button type="button" (click)="decreaseQuantity(item)" class="qty-btn">-</button>
-                  <span>{{ item.quantity }}</span>
-                  <button type="button" (click)="increaseQuantity(item)" class="qty-btn">+</button>
-                  <button type="button" (click)="removeItem(item.cartItemId)" style="background:transparent; border:none; color: #ff4d4d; cursor:pointer;" title="Remove">Remove</button>
+            <!-- Updated cart-item layout to use flexbox for the image and details -->
+            <div class="cart-item" *ngFor="let item of cartItems" style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+              
+              <!-- Binds directly to the bookImages dictionary populated in TypeScript -->
+              <img [src]="bookImages && bookImages[item.bookId] ? bookImages[item.bookId] : 'assets/images/placeholder.png'" 
+                   alt="{{ item.title }}" 
+                   class="item-image"
+                   style="width: 70px; height: 100px; object-fit: cover; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+              
+              <div class="item-details" style="flex: 1;">
+                <h4 style="margin: 0 0 8px 0; font-size: 1rem;">{{ item.title }}</h4>
+                <div class="item-quantity-controls" style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" (click)="decreaseQuantity(item)" class="qty-btn" style="width: 24px; height: 24px; border-radius: 4px; border: none; cursor: pointer;">-</button>
+                  <span style="font-weight: bold;">{{ item.quantity }}</span>
+                  <button type="button" (click)="increaseQuantity(item)" class="qty-btn" style="width: 24px; height: 24px; border-radius: 4px; border: none; cursor: pointer;">+</button>
+                  <button type="button" (click)="removeItem(item.cartItemId)" style="background:transparent; border:none; color: #ff4d4d; cursor:pointer; margin-left: 10px; font-size: 0.85rem;" title="Remove">Remove</button>
                 </div>
               </div>
-              <span class="item-price">${{ item.subtotal | number:'1.2-2' }}</span>
+              <span class="item-price" style="font-weight: bold; font-size: 1.1rem;">${{ item.subtotal | number:'1.2-2' }}</span>
             </div>
           </div>
 
-          <div class="summary-totals">
-            <div class="total-row"><span>Subtotal</span><span>${{ subtotal | number:'1.2-2' }}</span></div>
-            <div class="total-row"><span>Shipping</span><span>${{ shipping | number:'1.2-2' }}</span></div>
-            <div class="total-row"><span>Tax</span><span>${{ tax | number:'1.2-2' }}</span></div>
-            <div class="total-row grand-total"><span>Total</span><span class="gradient-text">${{ total | number:'1.2-2' }}</span></div>
-          </div>
+          <!-- <div class="summary-totals" style="margin-top: 20px;">
+            <div class="total-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>Subtotal</span><span>${{ subtotal | number:'1.2-2' }}</span></div>
+            <div class="total-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>Shipping</span><span>${{ shipping | number:'1.2-2' }}</span></div>
+            <div class="total-row" style="display: flex; justify-content: space-between; margin-bottom: 15px;"><span>Tax</span><span>${{ tax | number:'1.2-2' }}</span></div> -->
+            <div class="total-row grand-total" style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; font-size: 1.25rem; font-weight: bold;">
+              <span>Total</span><span class="gradient-text">${{ total | number:'1.2-2' }}</span>
+            </div>
+          
 
-          <button type="submit" form="checkoutForm" class="submit-btn btn-glow" [disabled]="isLoading">
+          <button type="submit" form="checkoutForm" class="submit-btn btn-glow" [disabled]="isLoading" style="width: 100%; margin-top: 25px; padding: 12px; font-size: 1.1rem;">
             <span *ngIf="!isLoading">Place Order</span>
-            <div class="spinner" *ngIf="isLoading"></div>
+            <div class="spinner" *ngIf="isLoading" style="margin: 0 auto;"></div>
           </button>
         </div>
       </aside>

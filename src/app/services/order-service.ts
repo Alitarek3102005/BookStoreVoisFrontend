@@ -47,6 +47,11 @@ export class OrderService {
     return this.http.patch<OrderResponse>(`${this.apiUrl}/${orderId}`, patchData);
   }
 
+  createCheckoutSession(orderId: string): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(`${this.apiUrl}/${orderId}/checkout-session`, {});
+  }
+
+  // Confirms payment on return from Stripe Checkout - transitions order PENDING -> SHIPPED
   payOrder(orderId: string): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(`${this.apiUrl}/${orderId}/pay`, {});
   }

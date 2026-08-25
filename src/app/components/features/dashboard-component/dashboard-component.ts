@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import Keycloak from 'keycloak-js'; 
 import { UserService } from '../../../services/user-service';
+import { BookService } from '../../../services/book-service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -17,6 +18,7 @@ import { environment } from '../../../../environments/environment';
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
   private userService = inject(UserService);
+  private bookService = inject(BookService);
   private keycloak = inject(Keycloak); 
   private apiUrl = environment.apiUrl || 'http://localhost:8080/api';
 
@@ -30,12 +32,22 @@ export class DashboardComponent implements OnInit {
   allOrders: any[] = [];
   allCategories: any[] = [];
 
+  // Low stock alert state
+  lowStockBooks: any[] = [];
+  stockThreshold: number = 10; // Alert if quantity is less than this
+
+  // Inline edit state for stock
+  editingStockId: string | null = null;
+  editStockValue: number = 0;
+
   showAddBookModal = false;
   showAddCategoryModal = false;
   
   newBook = { title: '', author: '', price: 0, quantity: 0, description: '', imgURL: '', categoryId: '' };
   newCategory = { name: '', description: '' };
   categories: any[] = [];
+
+  selectedFile: File | null = null;
 
   ngOnInit(): void {
     this.loadAdminData();
@@ -67,7 +79,6 @@ export class DashboardComponent implements OnInit {
   }
 
   updateStats(): void {
-    // Dynamically calculate revenue from COMPLETED or SHIPPED orders
     const totalRevenue = this.allOrders
       .filter(o => o.status === 'COMPLETED' || o.status === 'SHIPPED')
       .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
@@ -75,7 +86,6 @@ export class DashboardComponent implements OnInit {
     const activeOrdersCount = this.allOrders
       .filter(o => o.status === 'PENDING' || o.status === 'PROCESSING').length;
 
-    // Filter out soft-deleted items from the display stats
     const activeBooksCount = this.allBooks.filter(b => b.active !== false).length;
 
     this.stats = [
@@ -90,11 +100,39 @@ export class DashboardComponent implements OnInit {
     this.http.get<any[]>(`${this.apiUrl}/books?size=1000`).subscribe({
       next: (data) => {
         this.allBooks = data;
+        // Identify low stock active books
+        this.lowStockBooks = this.allBooks.filter(book => book.active !== false && book.quantity < this.stockThreshold);
         this.updateStats();
       },
       error: (err) => console.error('Failed to load books', err)
     });
   }
+
+  // ---- STOCK EDITING LOGIC ----
+  startEditStock(book: any): void {
+    this.editingStockId = book.bookId;
+    this.editStockValue = book.quantity;
+  }
+
+  cancelEditStock(): void {
+    this.editingStockId = null;
+  }
+
+  saveStock(bookId: string): void {
+    if (this.editStockValue < 0) {
+      alert('Stock cannot be negative.');
+      return;
+    }
+    
+    this.http.patch(`${this.apiUrl}/books/${bookId}`, { quantity: this.editStockValue }).subscribe({
+      next: () => {
+        this.editingStockId = null;
+        this.fetchBooks(); // Refresh to update list and alerts
+      },
+      error: () => alert('Failed to update stock quantity.')
+    });
+  }
+  // ------------------------------
 
   fetchUsers(): void {
     this.http.get<any[]>(`${this.apiUrl}/users?size=1000`).subscribe({
@@ -128,7 +166,17 @@ export class DashboardComponent implements OnInit {
   }
 
   openAddBookModal(): void { this.showAddBookModal = true; }
-  closeAddBookModal(): void { this.showAddBookModal = false; }
+  closeAddBookModal(): void { 
+    this.showAddBookModal = false; 
+    this.selectedFile = null;
+  }
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+    }
+  }
 
   submitNewBook(): void {
     if (!this.newBook.categoryId) {
@@ -136,16 +184,26 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.http.post(`${this.apiUrl}/books`, this.newBook).subscribe({
+    const bookPayload = {
+      title: this.newBook.title,
+      author: this.newBook.author,
+      price: this.newBook.price,
+      quantity: this.newBook.quantity,
+      description: this.newBook.description,
+      categoryId: this.newBook.categoryId
+    };
+
+    this.bookService.createBookWithImage(bookPayload, this.selectedFile).subscribe({
       next: () => {
-        alert('Book added successfully!');
+        alert('Book added and cover uploaded to AWS S3 successfully!');
         this.closeAddBookModal();
         this.fetchBooks();
         this.newBook = { title: '', author: '', price: 0, quantity: 0, description: '', imgURL: '', categoryId: '' };
+        this.selectedFile = null;
       },
       error: (err) => {
         console.error('Failed to add book', err);
-        alert('Failed to add book. Ensure fields are correct and image URL is short.');
+        alert('Failed to add book. Ensure fields are correct.');
       }
     });
   }
@@ -162,7 +220,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // NEW: Reactivate Book
   reactivateBook(bookId: string): void {
     if (confirm('Are you sure you want to reactivate this book?')) {
       this.http.patch(`${this.apiUrl}/books/${bookId}`, { active: true }).subscribe({
@@ -205,7 +262,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // NEW: Reactivate Category
   reactivateCategory(categoryId: string): void {
     if (confirm('Are you sure you want to reactivate this category?')) {
       this.http.patch(`${this.apiUrl}/categories/${categoryId}`, { active: true }).subscribe({

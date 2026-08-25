@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms'; 
 import { filter, Subscription } from 'rxjs';
 import Keycloak from 'keycloak-js';
@@ -20,6 +20,7 @@ export class OrderHistory implements OnInit, OnDestroy {
   private orderService = inject(OrderService);
   private keycloak = inject(Keycloak);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   orders: (OrderResponse & { isExpanded?: boolean })[] = [];
   isLoading = true;
@@ -34,12 +35,20 @@ export class OrderHistory implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUserId = (this.keycloak?.tokenParsed as any)?.sub || null;
-    this.loadOrders(true);
+
+    // Handle return from Stripe Checkout: confirm payment before loading orders
+    this.route.queryParams.subscribe(params => {
+      if (params['payment'] === 'success' && params['orderId']) {
+        this.confirmStripePayment(params['orderId']);
+      } else {
+        this.loadOrders(true);
+      }
+    });
 
     this.routerSub = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      if (event.url.includes('/order-history')) {
+      if (event.url.includes('/order-history') && !event.url.includes('payment=success')) {
         this.loadOrders(true);
       }
     });
@@ -49,6 +58,31 @@ export class OrderHistory implements OnInit, OnDestroy {
     if (this.routerSub) {
       this.routerSub.unsubscribe();
     }
+  }
+
+  private confirmStripePayment(orderId: string): void {
+    this.isLoading = true;
+    this.orderService.payOrder(orderId).subscribe({
+      next: () => {
+        // Strip the query params so a page refresh doesn't retrigger payment confirmation
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+        this.loadOrders(true);
+      },
+      error: (err) => {
+        console.error('Failed to confirm payment for order', orderId, err);
+        // Order may already be marked paid (e.g. webhook beat us to it) - just reload
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+        this.loadOrders(true);
+      }
+    });
   }
 
   loadOrders(resetPage: boolean = false): void {
@@ -112,25 +146,39 @@ export class OrderHistory implements OnInit, OnDestroy {
     order.isExpanded = !order.isExpanded;
   }
 
-  simulatePayment(orderId: string): void {
+  // --- CANCEL ORDER ---
+  cancelOrder(orderId: string): void {
+    if (confirm('Are you sure you want to cancel this order?')) {
+      this.processingOrderId = orderId;
+
+      this.orderService.patch(orderId, { status: 'CANCELED' }).subscribe({
+        next: () => {
+          this.processingOrderId = null;
+          // Refresh the current page to reflect the new CANCELED status
+          this.loadOrders(); 
+        },
+        error: (err) => {
+          console.error('Failed to cancel order', err);
+          this.processingOrderId = null;
+          alert(err.error?.message || 'Could not cancel the order. Please try again.');
+        }
+      });
+    }
+  }
+
+  // --- STRIPE PAYMENT REDIRECTION ---
+  payWithStripe(orderId: string): void {
     this.processingOrderId = orderId;
 
-    this.orderService.payOrder(orderId).subscribe({
-      next: (updatedOrder) => {
-        const index = this.orders.findIndex(o => o.orderId === orderId);
-        if (index !== -1) {
-          this.orders[index] = {
-            ...updatedOrder,
-            isExpanded: this.orders[index].isExpanded
-          };
-        }
-        this.processingOrderId = null;
-        alert('Payment successful! Your order has been shipped.');
+    this.orderService.createCheckoutSession(orderId).subscribe({
+      next: (response) => {
+        // Redirect browser to Stripe Hosted Checkout page
+        window.location.href = response.url;
       },
       error: (err) => {
-        console.error('Payment failed', err);
+        console.error('Failed to create Stripe checkout session', err);
         this.processingOrderId = null;
-        alert(err.error?.message || 'Payment processing failed. Please try again.');
+        alert(err.error?.message || 'Could not initiate Stripe payment. Please try again.');
       }
     });
   }
